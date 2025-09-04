@@ -59,7 +59,7 @@ def to_time(minutes):
     return f"{minutes // 60:02d}:{minutes % 60:02d}"
 
 
-def invert_busy(busy_times, day, start="09:00", end="18:00"):
+def invert_busy(busy_times, day, start="09:00", end="20:00"):
     """Convert busy intervals into free intervals for a given day."""
     start_m, end_m = to_minutes(start), to_minutes(end)
     intervals = [t for t in busy_times if t[2] == day]  # filter by day
@@ -112,48 +112,47 @@ def common_free_times(people_list, day):
     return [(to_time(s), to_time(e)) for s, e in common]
 
 
+def print_common_free_times(poeple_list, day):
+    """Print common free times for a given day with participant names"""
+    common = common_free_times(people_list, day)
+    if common:
+        print(f"{day}")
+        print(" | ", end="")
+        for start, end in common:
+            print(f"{start} - {end}", end=" | ")
+        print("\n")
+    else:
+        print(f"No common free time on {day}\n")
+
+
 # Example usage
 if __name__ == "__main__":
     # Create time slots for courses
-    coursex = [
-        TimeSlot("9:00", "10:00", "monday"),
-        TimeSlot("9:00", "10:00", "tuesday"),
+    # = [TimeSlot("", "", "")]
+    Etiquette = [TimeSlot("10:10", "12:00", "Monday")]
+    Nature = [TimeSlot("13:20", "15:10", "Monday")]
+    Python = [
+        TimeSlot("15:30", "17:20", "Tuesday"),
+        TimeSlot("14:20", "15:10", "Thursday"),
+        TimeSlot("18:30", "20:30", "Tuesday"),
     ]
-    coursey = [TimeSlot("2:00", "3:00", "monday"), TimeSlot("9:00", "10:00", "tuesday")]
-
+    PhysicsB = [
+        TimeSlot("08:30", "09:50", "Tuesday"),
+        TimeSlot("8:30", "9:50", "Friday"),
+    ]
+    Calculus1 = [
+        TimeSlot("10:10", "12:20", "Tuesday"),
+        TimeSlot("19:00", "21:00", "Wednesday"),
+        TimeSlot("10:10", "11:00", "Thursday"),
+    ]
     # Create people with schedules
-    mo = Person("mo", [coursex, coursey])
-    joe = Person("joe", [coursex, coursey])
+    mo = Person("mo", [Etiquette, Nature, Python, PhysicsB, Calculus1])
+    joe = Person("joe", [Etiquette, Nature, PhysicsB, Calculus1])
     people_list = [mo, joe]
 
-    Print individual schedules
-    print("Individual Schedules:")
-    for person in people_list:
-        print(person)
-
-    Find common free times for different days
-    days = ["monday", "tuesday", "wednesday", "thursday", "friday"]
-    print("\nCommon Free Times:")
+    # Find common free times for different days
+    days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]
+    names = [sch.name for sch in people_list]
+    print(f"Common Free Times for {', '.join(names)}")
     for day in days:
-        free_times = common_free_times(people_list, day)
-        if free_times:
-            print(f"{day.capitalize()}: {free_times}")
-        else:
-            print(f"{day.capitalize()}: No common free time")
-
-    # Example: Add a new course to Mo's schedule
-    print("\nAdding new course to Mo's schedule...")
-    coursez = [TimeSlot("11:00", "12:00", "wednesday")]
-    mo.schedule.append(coursez)
-    mo.busy_time = mo._create_busy_time_dict()  # Update busy_time
-
-    print("Updated schedules:")
-    for person in people_list:
-        print(person)
-
-    print("\nUpdated common free times for Wednesday:")
-    free_times = common_free_times(people_list, "wednesday")
-    if free_times:
-        print(f"Wednesday: {free_times}")
-    else:
-        print("Wednesday: No common free time")
+        print_common_free_times(people_list, day)
