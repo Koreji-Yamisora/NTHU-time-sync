@@ -1,13 +1,13 @@
-# Hi
+# Group Free Time Scheduler
 
-## Example Usage
+## Future Usage
 ```python
-Print individual schedules
+# Print individual schedules
 print("Individual Schedules:")
 for person in people_list:
     print(person)
 
-Find common free times for different days
+# Find common free times for different days
 days = ["monday", "tuesday", "wednesday", "thursday", "friday"]
 print("\nCommon Free Times:")
 for day in days:
