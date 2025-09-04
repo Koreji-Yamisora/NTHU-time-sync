@@ -1,7 +1,4 @@
-# Hi
 
-## Example Usage
-```python
 Print individual schedules
 print("Individual Schedules:")
 for person in people_list:
@@ -33,4 +30,3 @@ if free_times:
     print(f"Wednesday: {free_times}")
 else:
     print("Wednesday: No common free time")
-```
