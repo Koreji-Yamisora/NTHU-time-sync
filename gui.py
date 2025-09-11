@@ -2,18 +2,7 @@ import tkinter as tk
 from tkinter import ttk, messagebox, simpledialog
 from schedule import common_free_times
 from models import TimeSlot
-from storage import (
-    save_data,
-    add_person,
-    remove_person,
-    load_courses,
-    save_courses,
-    add_course,
-    remove_course,
-    assign_course_to_person,
-    remove_course_from_person,
-    get_people_in_course,
-)
+from storage import *
 
 
 class TimePickerFrame(ttk.Frame):
