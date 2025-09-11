@@ -18,6 +18,73 @@ from storage import (
 )
 
 
+class TimePickerFrame(ttk.Frame):
+    """A simple time picker widget using spinboxes for hours and minutes"""
+
+    def __init__(self, parent, initial_time="09:00", **kwargs):
+        super().__init__(parent, **kwargs)
+
+        # Parse initial time
+        try:
+            hour, minute = initial_time.split(":")
+            self.hour = int(hour)
+            self.minute = int(minute)
+        except:
+            self.hour = 9
+            self.minute = 0
+
+        # Create spinboxes
+        self.hour_var = tk.StringVar(value=f"{self.hour:02d}")
+        self.minute_var = tk.StringVar(value=f"{self.minute:02d}")
+
+        # Hour spinbox
+        self.hour_spin = ttk.Spinbox(
+            self,
+            from_=0,
+            to=23,
+            width=3,
+            textvariable=self.hour_var,
+            format="%02.0f",
+            wrap=True,
+        )
+        self.hour_spin.pack(side="left")
+
+        # Separator
+        ttk.Label(self, text=":").pack(side="left")
+
+        # Minute spinbox
+        self.minute_spin = ttk.Spinbox(
+            self,
+            from_=0,
+            to=59,
+            width=3,
+            textvariable=self.minute_var,
+            format="%02.0f",
+            wrap=True,
+            increment=15,  # 15-minute increments
+        )
+        self.minute_spin.pack(side="left")
+
+    def get_time(self):
+        """Get the selected time as HH:MM string"""
+        try:
+            hour = int(self.hour_var.get())
+            minute = int(self.minute_var.get())
+            return f"{hour:02d}:{minute:02d}"
+        except:
+            return "09:00"
+
+    def set_time(self, time_str):
+        """Set the time from HH:MM string"""
+        try:
+            hour, minute = time_str.split(":")
+            self.hour_var.set(f"{int(hour):02d}")
+            self.minute_var.set(f"{int(minute):02d}")
+        except:
+            self.hour_var.set("09")
+            self.minute_var.set("00")
+
+
 class ScheduleManagerGUI:
     def __init__(self, people_list, data_file="schedule_data.json"):
         self.people_list = people_list
@@ -200,16 +267,14 @@ class ScheduleManagerGUI:
         ttk.Label(slot_section, text="Start:").grid(
             row=0, column=2, sticky="w", padx=(20, 5), pady=2
         )
-        self.start_time_var = tk.StringVar(value="09:00")
-        start_entry = ttk.Entry(slot_section, textvariable=self.start_time_var, width=8)
-        start_entry.grid(row=0, column=3, sticky="w", padx=5, pady=2)
+        self.start_time_picker = TimePickerFrame(slot_section, initial_time="09:00")
+        self.start_time_picker.grid(row=0, column=3, sticky="w", padx=5, pady=2)
 
         ttk.Label(slot_section, text="End:").grid(
             row=0, column=4, sticky="w", padx=(10, 5), pady=2
         )
-        self.end_time_var = tk.StringVar(value="10:00")
-        end_entry = ttk.Entry(slot_section, textvariable=self.end_time_var, width=8)
-        end_entry.grid(row=0, column=5, sticky="w", padx=5, pady=2)
+        self.end_time_picker = TimePickerFrame(slot_section, initial_time="10:00")
+        self.end_time_picker.grid(row=0, column=5, sticky="w", padx=5, pady=2)
 
         ttk.Button(slot_section, text="Add Slot", command=self.add_time_slot).grid(
             row=0, column=6, padx=10, pady=2
@@ -321,20 +386,14 @@ class ScheduleManagerGUI:
         ttk.Label(entry_frame, text="Start:").grid(
             row=0, column=2, sticky="w", padx=(20, 5), pady=2
         )
-        self.course_start_var = tk.StringVar(value="09:00")
-        course_start_entry = ttk.Entry(
-            entry_frame, textvariable=self.course_start_var, width=8
-        )
-        course_start_entry.grid(row=0, column=3, sticky="w", padx=5, pady=2)
+        self.course_start_picker = TimePickerFrame(entry_frame, initial_time="09:00")
+        self.course_start_picker.grid(row=0, column=3, sticky="w", padx=5, pady=2)
 
         ttk.Label(entry_frame, text="End:").grid(
             row=0, column=4, sticky="w", padx=(10, 5), pady=2
         )
-        self.course_end_var = tk.StringVar(value="10:00")
-        course_end_entry = ttk.Entry(
-            entry_frame, textvariable=self.course_end_var, width=8
-        )
-        course_end_entry.grid(row=0, column=5, sticky="w", padx=5, pady=2)
+        self.course_end_picker = TimePickerFrame(entry_frame, initial_time="10:00")
+        self.course_end_picker.grid(row=0, column=5, sticky="w", padx=5, pady=2)
 
         # Buttons for course time slot management
         btn_frame = ttk.Frame(slot_mgmt_frame)
@@ -703,8 +762,8 @@ class ScheduleManagerGUI:
 
         person_name = self.people_listbox.get(selection[0])
         day = self.day_var.get()
-        start_time = self.start_time_var.get().strip()
-        end_time = self.end_time_var.get().strip()
+        start_time = self.start_time_picker.get_time()
+        end_time = self.end_time_picker.get_time()
 
         try:
             if not all([day, start_time, end_time]):
@@ -1070,8 +1129,8 @@ class ScheduleManagerGUI:
 
         course_name = self.courses_listbox.get(selection[0])
         day = self.course_day_var.get()
-        start_time = self.course_start_var.get().strip()
-        end_time = self.course_end_var.get().strip()
+        start_time = self.course_start_picker.get_time()
+        end_time = self.course_end_picker.get_time()
 
         try:
             if not all([day, start_time, end_time]):
