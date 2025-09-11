@@ -106,7 +106,6 @@ class ScheduleManagerGUI:
     def refresh_people_checkboxes(self):
         """Refresh the people selection checkboxes"""
         # Clear existing checkboxes
-        print("refreshed called")
         for widget in self.people_checkboxes_frame.winfo_children():
             widget.destroy()
 
