@@ -1,0 +1,59 @@
+{
+  "courses": {
+    "course_0": [
+      [
+        "09:00",
+        "10:30",
+        "Monday"
+      ],
+      [
+        "09:00",
+        "10:30",
+        "Wednesday"
+      ],
+      [
+        "09:00",
+        "10:30",
+        "Friday"
+      ]
+    ],
+    "course_1": [
+      [
+        "11:00",
+        "12:30",
+        "Tuesday"
+      ],
+      [
+        "11:00",
+        "12:30",
+        "Thursday"
+      ]
+    ],
+    "course_2": [
+      [
+        "14:00",
+        "15:30",
+        "Monday"
+      ],
+      [
+        "14:00",
+        "15:30",
+        "Wednesday"
+      ]
+    ]
+  },
+  "people": {
+    "Alice": [
+      "course_0",
+      "course_1"
+    ],
+    "Bob": [
+      "course_0",
+      "course_2"
+    ],
+    "Charlie": [
+      "course_1",
+      "course_2"
+    ]
+  }
+}

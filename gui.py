@@ -1,23 +1,1273 @@
 import tkinter as tk
-from tkinter import ttk
+from tkinter import ttk, messagebox, simpledialog
+from schedule import common_free_times, print_common_free_times
+from models import Person, TimeSlot
+from storage import (
+    save_data,
+    add_person,
+    remove_person,
+    update_person_schedule,
+    load_courses,
+    save_courses,
+    add_course,
+    remove_course,
+    update_course,
+    assign_course_to_person,
+    remove_course_from_person,
+    get_people_in_course,
+)
 
 
-def launch_gui(people_list, days):
-    root = tk.Tk()
-    root.title("Common Free Times")
+class ScheduleManagerGUI:
+    def __init__(self, people_list, data_file="schedule_data.json"):
+        self.people_list = people_list
+        self.data_file = data_file
+        self.courses = load_courses(data_file)  # Load courses from file
+        self.days = [
+            "Monday",
+            "Tuesday",
+            "Wednesday",
+            "Thursday",
+            "Friday",
+            "Saturday",
+            "Sunday",
+        ]
 
-    tree = ttk.Treeview(root, columns=days, show="headings")
-    for day in days:
-        tree.heading(day, text=day)
-        tree.column(day, width=120)
+        # Create main window
+        self.root = tk.Tk()
+        self.root.title("Schedule Manager")
+        self.root.geometry("1400x900")
+        self.root.minsize(1200, 700)
 
-    # Fill the table with free times for each person
-    for person in people_list:
-        row = []
-        for day in days:
-            free_times = common_free_times(person, day)  # your function
-            row.append(", ".join(free_times) if free_times else "Busy")
-        tree.insert("", tk.END, values=row)
+        # Create notebook for tabs
+        self.notebook = ttk.Notebook(self.root)
+        self.notebook.pack(fill="both", expand=True, padx=10, pady=10)
 
-    tree.pack(expand=True, fill="both")
-    root.mainloop()
+        # Create tabs
+        self.create_schedule_tab()
+        self.create_people_tab()
+        self.create_courses_tab()
+        self.create_common_times_tab()
+
+        # Initialize displays
+        self.refresh_all()
+
+    def refresh_all(self):
+        """Refresh all displays"""
+        self.refresh_schedule_view()
+        self.refresh_people_list()
+        self.refresh_courses_list()
+
+    def create_schedule_tab(self):
+        """Create the main schedule viewing tab"""
+        schedule_frame = ttk.Frame(self.notebook)
+        self.notebook.add(schedule_frame, text="📅 Schedules")
+
+        # Create main container with scrolling
+        main_container = ttk.Frame(schedule_frame)
+        main_container.pack(fill="both", expand=True)
+
+        # Create treeview for schedules
+        columns = ["Person"] + self.days
+        self.schedule_tree = ttk.Treeview(
+            main_container, columns=columns, show="headings", height=15
+        )
+
+        # Configure columns
+        self.schedule_tree.heading("Person", text="Person")
+        self.schedule_tree.column("Person", width=120, minwidth=100)
+
+        for day in self.days:
+            self.schedule_tree.heading(day, text=day)
+            self.schedule_tree.column(day, width=140, minwidth=120)
+
+        # Add scrollbars
+        v_scrollbar = ttk.Scrollbar(
+            main_container, orient="vertical", command=self.schedule_tree.yview
+        )
+        h_scrollbar = ttk.Scrollbar(
+            main_container, orient="horizontal", command=self.schedule_tree.xview
+        )
+        self.schedule_tree.configure(
+            yscrollcommand=v_scrollbar.set, xscrollcommand=h_scrollbar.set
+        )
+
+        # Pack treeview and scrollbars
+        self.schedule_tree.grid(row=0, column=0, sticky="nsew")
+        v_scrollbar.grid(row=0, column=1, sticky="ns")
+        h_scrollbar.grid(row=1, column=0, sticky="ew")
+
+        # Configure grid weights
+        main_container.grid_rowconfigure(0, weight=1)
+        main_container.grid_columnconfigure(0, weight=1)
+
+        # Add control buttons
+        button_frame = ttk.Frame(schedule_frame)
+        button_frame.pack(fill="x", pady=10)
+
+        ttk.Button(
+            button_frame, text="🔄 Refresh", command=self.refresh_schedule_view
+        ).pack(side="left", padx=5)
+        ttk.Button(
+            button_frame, text="💾 Save All Data", command=self.save_all_data
+        ).pack(side="left", padx=5)
+
+        # Legend
+        legend_frame = ttk.LabelFrame(button_frame, text="Legend", padding="5")
+        legend_frame.pack(side="right", padx=5)
+        ttk.Label(legend_frame, text="📚 Course schedules | 🆓 Free time").pack()
+
+    def create_people_tab(self):
+        """Create the people management tab"""
+        people_frame = ttk.Frame(self.notebook)
+        self.notebook.add(people_frame, text="👥 Manage People")
+
+        # Left side - People list
+        left_frame = ttk.LabelFrame(people_frame, text="People", padding="10")
+        left_frame.grid(row=0, column=0, sticky="nsew", padx=5, pady=5)
+
+        # People listbox with scrollbar
+        list_container = ttk.Frame(left_frame)
+        list_container.pack(fill="both", expand=True)
+
+        self.people_listbox = tk.Listbox(list_container, height=12, font=("Arial", 10))
+        people_scroll = ttk.Scrollbar(
+            list_container, orient="vertical", command=self.people_listbox.yview
+        )
+        self.people_listbox.configure(yscrollcommand=people_scroll.set)
+
+        self.people_listbox.pack(side="left", fill="both", expand=True)
+        people_scroll.pack(side="right", fill="y")
+
+        # People management buttons
+        people_btn_frame = ttk.Frame(left_frame)
+        people_btn_frame.pack(fill="x", pady=10)
+
+        ttk.Button(
+            people_btn_frame, text="➕ Add Person", command=self.add_person_dialog
+        ).grid(row=0, column=0, padx=2, pady=2, sticky="ew")
+        ttk.Button(
+            people_btn_frame, text="✏️ Edit Name", command=self.edit_person_dialog
+        ).grid(row=0, column=1, padx=2, pady=2, sticky="ew")
+        ttk.Button(people_btn_frame, text="🗑️ Delete", command=self.delete_person).grid(
+            row=0, column=2, padx=2, pady=2, sticky="ew"
+        )
+
+        people_btn_frame.grid_columnconfigure(0, weight=1)
+        people_btn_frame.grid_columnconfigure(1, weight=1)
+        people_btn_frame.grid_columnconfigure(2, weight=1)
+
+        # Right side - Schedule editing
+        right_frame = ttk.LabelFrame(
+            people_frame, text="Schedule Management", padding="10"
+        )
+        right_frame.grid(row=0, column=1, sticky="nsew", padx=5, pady=5)
+
+        # Course assignment section
+        course_section = ttk.LabelFrame(
+            right_frame, text="Course Assignment", padding="10"
+        )
+        course_section.pack(fill="x", pady=5)
+
+        course_btn_frame = ttk.Frame(course_section)
+        course_btn_frame.pack(fill="x")
+
+        ttk.Button(
+            course_btn_frame, text="📚 Assign Course", command=self.assign_course_dialog
+        ).pack(side="left", padx=5)
+        ttk.Button(
+            course_btn_frame, text="❌ Remove Course", command=self.remove_course_dialog
+        ).pack(side="left", padx=5)
+
+        # Individual time slot section
+        slot_section = ttk.LabelFrame(
+            right_frame, text="Add Individual Time Slot", padding="10"
+        )
+        slot_section.pack(fill="x", pady=5)
+
+        # Time slot entry grid
+        ttk.Label(slot_section, text="Day:").grid(row=0, column=0, sticky="w", pady=2)
+        self.day_var = tk.StringVar(value="Monday")
+        day_combo = ttk.Combobox(
+            slot_section,
+            textvariable=self.day_var,
+            values=self.days,
+            state="readonly",
+            width=12,
+        )
+        day_combo.grid(row=0, column=1, sticky="w", padx=5, pady=2)
+
+        ttk.Label(slot_section, text="Start:").grid(
+            row=0, column=2, sticky="w", padx=(20, 5), pady=2
+        )
+        self.start_time_var = tk.StringVar(value="09:00")
+        start_entry = ttk.Entry(slot_section, textvariable=self.start_time_var, width=8)
+        start_entry.grid(row=0, column=3, sticky="w", padx=5, pady=2)
+
+        ttk.Label(slot_section, text="End:").grid(
+            row=0, column=4, sticky="w", padx=(10, 5), pady=2
+        )
+        self.end_time_var = tk.StringVar(value="10:00")
+        end_entry = ttk.Entry(slot_section, textvariable=self.end_time_var, width=8)
+        end_entry.grid(row=0, column=5, sticky="w", padx=5, pady=2)
+
+        ttk.Button(slot_section, text="➕ Add Slot", command=self.add_time_slot).grid(
+            row=0, column=6, padx=10, pady=2
+        )
+
+        # Current schedule display
+        schedule_section = ttk.LabelFrame(
+            right_frame, text="Current Schedule", padding="10"
+        )
+        schedule_section.pack(fill="both", expand=True, pady=5)
+
+        # Create text widget with scrollbar
+        text_frame = ttk.Frame(schedule_section)
+        text_frame.pack(fill="both", expand=True)
+
+        self.schedule_text = tk.Text(
+            text_frame, height=15, width=50, font=("Consolas", 9), wrap="word"
+        )
+        schedule_scroll = ttk.Scrollbar(
+            text_frame, orient="vertical", command=self.schedule_text.yview
+        )
+        self.schedule_text.configure(yscrollcommand=schedule_scroll.set)
+
+        self.schedule_text.pack(side="left", fill="both", expand=True)
+        schedule_scroll.pack(side="right", fill="y")
+
+        # Configure grid weights
+        people_frame.grid_rowconfigure(0, weight=1)
+        people_frame.grid_columnconfigure(0, weight=1)
+        people_frame.grid_columnconfigure(1, weight=2)
+
+        # Bind selection event
+        self.people_listbox.bind("<<ListboxSelect>>", self.on_person_select)
+
+    def create_courses_tab(self):
+        """Create the courses management tab"""
+        courses_frame = ttk.Frame(self.notebook)
+        self.notebook.add(courses_frame, text="📚 Manage Courses")
+
+        # Left side - Course list
+        left_frame = ttk.LabelFrame(courses_frame, text="Courses", padding="10")
+        left_frame.grid(row=0, column=0, sticky="nsew", padx=5, pady=5)
+
+        # Course listbox with scrollbar
+        list_container = ttk.Frame(left_frame)
+        list_container.pack(fill="both", expand=True)
+
+        self.courses_listbox = tk.Listbox(list_container, height=12, font=("Arial", 10))
+        courses_scroll = ttk.Scrollbar(
+            list_container, orient="vertical", command=self.courses_listbox.yview
+        )
+        self.courses_listbox.configure(yscrollcommand=courses_scroll.set)
+
+        self.courses_listbox.pack(side="left", fill="both", expand=True)
+        courses_scroll.pack(side="right", fill="y")
+
+        # Course management buttons
+        course_btn_frame = ttk.Frame(left_frame)
+        course_btn_frame.pack(fill="x", pady=10)
+
+        ttk.Button(
+            course_btn_frame, text="➕ Add Course", command=self.add_course_dialog
+        ).grid(row=0, column=0, padx=2, pady=2, sticky="ew")
+        ttk.Button(
+            course_btn_frame, text="✏️ Edit Name", command=self.edit_course_dialog
+        ).grid(row=0, column=1, padx=2, pady=2, sticky="ew")
+        ttk.Button(course_btn_frame, text="🗑️ Delete", command=self.delete_course).grid(
+            row=0, column=2, padx=2, pady=2, sticky="ew"
+        )
+
+        course_btn_frame.grid_columnconfigure(0, weight=1)
+        course_btn_frame.grid_columnconfigure(1, weight=1)
+        course_btn_frame.grid_columnconfigure(2, weight=1)
+
+        # Right side - Course details and editing
+        right_frame = ttk.LabelFrame(courses_frame, text="Course Details", padding="10")
+        right_frame.grid(row=0, column=1, sticky="nsew", padx=5, pady=5)
+
+        # Course name display
+        self.course_name_label = ttk.Label(
+            right_frame,
+            text="Select a course to view details",
+            font=("Arial", 12, "bold"),
+            foreground="blue",
+        )
+        self.course_name_label.pack(pady=10)
+
+        # Time slot management section
+        slot_mgmt_frame = ttk.LabelFrame(
+            right_frame, text="Add Time Slot to Course", padding="10"
+        )
+        slot_mgmt_frame.pack(fill="x", pady=5)
+
+        # Time slot entry
+        entry_frame = ttk.Frame(slot_mgmt_frame)
+        entry_frame.pack(fill="x")
+
+        ttk.Label(entry_frame, text="Day:").grid(row=0, column=0, sticky="w", pady=2)
+        self.course_day_var = tk.StringVar(value="Monday")
+        course_day_combo = ttk.Combobox(
+            entry_frame,
+            textvariable=self.course_day_var,
+            values=self.days,
+            state="readonly",
+            width=10,
+        )
+        course_day_combo.grid(row=0, column=1, sticky="w", padx=5, pady=2)
+
+        ttk.Label(entry_frame, text="Start:").grid(
+            row=0, column=2, sticky="w", padx=(20, 5), pady=2
+        )
+        self.course_start_var = tk.StringVar(value="09:00")
+        course_start_entry = ttk.Entry(
+            entry_frame, textvariable=self.course_start_var, width=8
+        )
+        course_start_entry.grid(row=0, column=3, sticky="w", padx=5, pady=2)
+
+        ttk.Label(entry_frame, text="End:").grid(
+            row=0, column=4, sticky="w", padx=(10, 5), pady=2
+        )
+        self.course_end_var = tk.StringVar(value="10:00")
+        course_end_entry = ttk.Entry(
+            entry_frame, textvariable=self.course_end_var, width=8
+        )
+        course_end_entry.grid(row=0, column=5, sticky="w", padx=5, pady=2)
+
+        # Buttons for course time slot management
+        btn_frame = ttk.Frame(slot_mgmt_frame)
+        btn_frame.pack(fill="x", pady=5)
+
+        ttk.Button(
+            btn_frame, text="➕ Add Slot", command=self.add_course_time_slot
+        ).pack(side="left", padx=5)
+        ttk.Button(
+            btn_frame, text="🗑️ Remove Selected", command=self.remove_course_time_slot
+        ).pack(side="left", padx=5)
+
+        # Course schedule display
+        schedule_frame = ttk.LabelFrame(
+            right_frame, text="Course Schedule", padding="10"
+        )
+        schedule_frame.pack(fill="both", expand=True, pady=5)
+
+        # Treeview for course time slots
+        tree_container = ttk.Frame(schedule_frame)
+        tree_container.pack(fill="both", expand=True)
+
+        self.course_slots_tree = ttk.Treeview(
+            tree_container, columns=("Day", "Start", "End"), show="headings", height=6
+        )
+        self.course_slots_tree.heading("Day", text="Day")
+        self.course_slots_tree.heading("Start", text="Start Time")
+        self.course_slots_tree.heading("End", text="End Time")
+        self.course_slots_tree.column("Day", width=80, minwidth=70)
+        self.course_slots_tree.column("Start", width=80, minwidth=70)
+        self.course_slots_tree.column("End", width=80, minwidth=70)
+
+        tree_scroll = ttk.Scrollbar(
+            tree_container, orient="vertical", command=self.course_slots_tree.yview
+        )
+        self.course_slots_tree.configure(yscrollcommand=tree_scroll.set)
+
+        self.course_slots_tree.pack(side="left", fill="both", expand=True)
+        tree_scroll.pack(side="right", fill="y")
+
+        # Enrolled students display
+        enrolled_frame = ttk.LabelFrame(
+            right_frame, text="Enrolled Students", padding="10"
+        )
+        enrolled_frame.pack(fill="both", expand=True, pady=5)
+
+        enrolled_container = ttk.Frame(enrolled_frame)
+        enrolled_container.pack(fill="both", expand=True)
+
+        self.enrolled_text = tk.Text(
+            enrolled_container, height=6, width=40, font=("Arial", 9), wrap="word"
+        )
+        enrolled_scroll = ttk.Scrollbar(
+            enrolled_container, orient="vertical", command=self.enrolled_text.yview
+        )
+        self.enrolled_text.configure(yscrollcommand=enrolled_scroll.set)
+
+        self.enrolled_text.pack(side="left", fill="both", expand=True)
+        enrolled_scroll.pack(side="right", fill="y")
+
+        # Configure grid weights
+        courses_frame.grid_rowconfigure(0, weight=1)
+        courses_frame.grid_columnconfigure(0, weight=1)
+        courses_frame.grid_columnconfigure(1, weight=2)
+
+        # Bind selection events
+        self.courses_listbox.bind("<<ListboxSelect>>", self.on_course_select)
+
+    def create_common_times_tab(self):
+        """Create the common free times tab"""
+        common_frame = ttk.Frame(self.notebook)
+        self.notebook.add(common_frame, text="🤝 Common Times")
+
+        # Controls frame
+        controls_frame = ttk.LabelFrame(
+            common_frame, text="Find Common Free Times", padding="15"
+        )
+        controls_frame.pack(fill="x", padx=10, pady=10)
+
+        # Control widgets
+        control_row = ttk.Frame(controls_frame)
+        control_row.pack(fill="x")
+
+        ttk.Label(control_row, text="Select Day:", font=("Arial", 10)).pack(
+            side="left", padx=5
+        )
+        self.common_day_var = tk.StringVar(value="Monday")
+        day_combo = ttk.Combobox(
+            control_row,
+            textvariable=self.common_day_var,
+            values=self.days,
+            state="readonly",
+            width=12,
+        )
+        day_combo.pack(side="left", padx=5)
+
+        ttk.Button(
+            control_row, text="🔍 Find for Day", command=self.find_common_times
+        ).pack(side="left", padx=10)
+        ttk.Button(
+            control_row, text="📅 Show All Days", command=self.show_all_common_times
+        ).pack(side="left", padx=5)
+        ttk.Button(
+            control_row, text="🔄 Refresh", command=self.show_all_common_times
+        ).pack(side="left", padx=5)
+
+        # Results frame
+        results_frame = ttk.LabelFrame(
+            common_frame, text="Common Free Time Results", padding="10"
+        )
+        results_frame.pack(fill="both", expand=True, padx=10, pady=5)
+
+        # Text widget for results
+        text_container = ttk.Frame(results_frame)
+        text_container.pack(fill="both", expand=True)
+
+        self.results_text = tk.Text(
+            text_container, wrap="word", font=("Consolas", 10), bg="#f8f9fa"
+        )
+        results_scroll = ttk.Scrollbar(
+            text_container, orient="vertical", command=self.results_text.yview
+        )
+        self.results_text.configure(yscrollcommand=results_scroll.set)
+
+        self.results_text.pack(side="left", fill="both", expand=True)
+        results_scroll.pack(side="right", fill="y")
+
+        # Initialize with all days
+        self.root.after(100, self.show_all_common_times)
+
+    def refresh_schedule_view(self):
+        """Refresh the main schedule view"""
+        # Clear existing items
+        for item in self.schedule_tree.get_children():
+            self.schedule_tree.delete(item)
+
+        if not self.people_list:
+            # Add a message if no people
+            self.schedule_tree.insert(
+                "", "end", values=["No people added yet"] + [""] * len(self.days)
+            )
+            return
+
+        # Add each person's schedule
+        for person in self.people_list:
+            row_data = [person.name]
+
+            for day in self.days:
+                day_schedule = []
+                for course_slots in person.schedule:
+                    for slot in course_slots:
+                        if slot.day == day:
+                            day_schedule.append(f"{slot.start_time}-{slot.end_time}")
+
+                if day_schedule:
+                    row_data.append(", ".join(sorted(day_schedule)))
+                else:
+                    row_data.append("🆓 Free")
+
+            self.schedule_tree.insert("", "end", values=row_data)
+
+    def refresh_people_list(self):
+        """Refresh the people listbox"""
+        current_selection = None
+        if self.people_listbox.curselection():
+            current_selection = self.people_listbox.get(
+                self.people_listbox.curselection()[0]
+            )
+
+        self.people_listbox.delete(0, tk.END)
+        for person in self.people_list:
+            self.people_listbox.insert(tk.END, person.name)
+
+        # Restore selection if possible
+        if current_selection:
+            for i in range(self.people_listbox.size()):
+                if self.people_listbox.get(i) == current_selection:
+                    self.people_listbox.selection_set(i)
+                    self.show_person_schedule(current_selection)
+                    break
+
+    def refresh_courses_list(self):
+        """Refresh the courses listbox"""
+        current_selection = None
+        if self.courses_listbox.curselection():
+            current_selection = self.courses_listbox.get(
+                self.courses_listbox.curselection()[0]
+            )
+
+        self.courses_listbox.delete(0, tk.END)
+        for course_name in sorted(self.courses.keys()):
+            self.courses_listbox.insert(tk.END, course_name)
+
+        # Restore selection if possible
+        if current_selection and current_selection in self.courses:
+            for i in range(self.courses_listbox.size()):
+                if self.courses_listbox.get(i) == current_selection:
+                    self.courses_listbox.selection_set(i)
+                    self.show_course_details(current_selection)
+                    break
+
+    def on_person_select(self, event):
+        """Handle person selection in listbox"""
+        selection = self.people_listbox.curselection()
+        if selection:
+            person_name = self.people_listbox.get(selection[0])
+            self.show_person_schedule(person_name)
+
+    def on_course_select(self, event):
+        """Handle course selection in listbox"""
+        selection = self.courses_listbox.curselection()
+        if selection:
+            course_name = self.courses_listbox.get(selection[0])
+            self.show_course_details(course_name)
+
+    def show_person_schedule(self, person_name):
+        """Show selected person's schedule in text widget"""
+        self.schedule_text.delete("1.0", tk.END)
+
+        person = next((p for p in self.people_list if p.name == person_name), None)
+        if not person:
+            return
+
+        schedule_text = f"📋 Schedule for {person_name}\n"
+        schedule_text += "=" * (len(person_name) + 20) + "\n\n"
+
+        # Group schedule by day
+        schedule_by_day = {}
+        course_names = {}  # Map course slots to course names
+
+        # Find course names for each set of slots
+        for course_name, course_slots in self.courses.items():
+            for person_course in person.schedule:
+                if person_course == course_slots:
+                    course_names[id(person_course)] = course_name
+
+        # Organize by day
+        for course_slots in person.schedule:
+            course_name = course_names.get(id(course_slots), "Individual Slots")
+            for slot in course_slots:
+                if slot.day not in schedule_by_day:
+                    schedule_by_day[slot.day] = []
+                schedule_by_day[slot.day].append(
+                    {
+                        "time": f"{slot.start_time} - {slot.end_time}",
+                        "course": course_name,
+                    }
+                )
+
+        # Display schedule
+        for day in self.days:
+            schedule_text += f"📅 {day}:\n"
+            if day in schedule_by_day:
+                # Sort by start time
+                day_slots = sorted(schedule_by_day[day], key=lambda x: x["time"])
+                for slot_info in day_slots:
+                    schedule_text += (
+                        f"   📚 {slot_info['time']} - {slot_info['course']}\n"
+                    )
+            else:
+                schedule_text += "   🆓 Free\n"
+            schedule_text += "\n"
+
+        self.schedule_text.insert("1.0", schedule_text)
+
+    def show_course_details(self, course_name):
+        """Show selected course's details"""
+        if course_name not in self.courses:
+            return
+
+        self.course_name_label.config(text=f"📚 Course: {course_name}")
+
+        # Clear and populate course slots tree
+        for item in self.course_slots_tree.get_children():
+            self.course_slots_tree.delete(item)
+
+        course_slots = self.courses[course_name]
+        for slot in sorted(
+            course_slots, key=lambda x: (self.days.index(x.day), x.start_time)
+        ):
+            self.course_slots_tree.insert(
+                "", "end", values=(slot.day, slot.start_time, slot.end_time)
+            )
+
+        # Show enrolled students
+        self.enrolled_text.delete("1.0", tk.END)
+        try:
+            enrolled_people = get_people_in_course(
+                self.people_list, self.courses, course_name
+            )
+            if enrolled_people:
+                enrolled_text = f"👥 Students enrolled in {course_name}:\n\n"
+                for i, person_name in enumerate(enrolled_people, 1):
+                    enrolled_text += f"{i}. {person_name}\n"
+                enrolled_text += f"\n📊 Total: {len(enrolled_people)} students"
+            else:
+                enrolled_text = f"ℹ️ No students currently enrolled in {course_name}"
+
+            self.enrolled_text.insert("1.0", enrolled_text)
+        except Exception as e:
+            self.enrolled_text.insert("1.0", f"❌ Error loading enrollment: {str(e)}")
+
+    # Person Management Methods
+    def add_person_dialog(self):
+        """Show dialog to add new person"""
+        name = simpledialog.askstring("Add Person", "Enter person's name:")
+        if name and name.strip():
+            try:
+                add_person(self.people_list, name.strip())
+                self.refresh_all()
+                self.save_all_data()
+                messagebox.showinfo("✅ Success", f"Added person: {name}")
+            except ValueError as e:
+                messagebox.showerror("❌ Error", str(e))
+
+    def edit_person_dialog(self):
+        """Show dialog to edit person's name"""
+        selection = self.people_listbox.curselection()
+        if not selection:
+            messagebox.showwarning("⚠️ No Selection", "Please select a person to edit.")
+            return
+
+        old_name = self.people_listbox.get(selection[0])
+        new_name = simpledialog.askstring(
+            "Edit Person", f"Enter new name for {old_name}:", initialvalue=old_name
+        )
+
+        if new_name and new_name.strip() and new_name != old_name:
+            person = next((p for p in self.people_list if p.name == old_name), None)
+            if person:
+                person.name = new_name.strip()
+                self.refresh_all()
+                self.save_all_data()
+                messagebox.showinfo("✅ Success", f"Renamed {old_name} to {new_name}")
+
+    def delete_person(self):
+        """Delete selected person"""
+        selection = self.people_listbox.curselection()
+        if not selection:
+            messagebox.showwarning(
+                "⚠️ No Selection", "Please select a person to delete."
+            )
+            return
+
+        person_name = self.people_listbox.get(selection[0])
+
+        if messagebox.askyesno(
+            "🗑️ Confirm Delete", f"Are you sure you want to delete {person_name}?"
+        ):
+            try:
+                remove_person(self.people_list, person_name)
+                self.refresh_all()
+                self.schedule_text.delete("1.0", tk.END)
+                self.save_all_data()
+                messagebox.showinfo("✅ Success", f"Deleted person: {person_name}")
+            except ValueError as e:
+                messagebox.showerror("❌ Error", str(e))
+
+    def add_time_slot(self):
+        """Add individual time slot to selected person"""
+        selection = self.people_listbox.curselection()
+        if not selection:
+            messagebox.showwarning("⚠️ No Selection", "Please select a person first.")
+            return
+
+        person_name = self.people_listbox.get(selection[0])
+        day = self.day_var.get()
+        start_time = self.start_time_var.get().strip()
+        end_time = self.end_time_var.get().strip()
+
+        try:
+            if not all([day, start_time, end_time]):
+                raise ValueError("All fields must be filled")
+
+            # Validate time format (basic check)
+            if ":" not in start_time or ":" not in end_time:
+                raise ValueError("Time must be in HH:MM format")
+
+            # Create new time slot
+            new_slot = TimeSlot(start_time, end_time, day)
+
+            # Find the person and add the slot
+            person = next((p for p in self.people_list if p.name == person_name), None)
+            if person:
+                # Add as a single-slot course
+                person.schedule.append([new_slot])
+                person.busy_time = person._create_busy_time_dict()
+
+                self.show_person_schedule(person_name)
+                self.refresh_schedule_view()
+                self.save_all_data()
+                messagebox.showinfo(
+                    "✅ Success", f"Added time slot: {day} {start_time}-{end_time}"
+                )
+
+        except Exception as e:
+            messagebox.showerror("❌ Error", f"Failed to add time slot: {str(e)}")
+
+    def assign_course_dialog(self):
+        """Show dialog to assign course to selected person"""
+        selection = self.people_listbox.curselection()
+        if not selection:
+            messagebox.showwarning("⚠️ No Selection", "Please select a person first.")
+            return
+
+        person_name = self.people_listbox.get(selection[0])
+
+        if not self.courses:
+            messagebox.showwarning(
+                "⚠️ No Courses", "No courses available. Please create courses first."
+            )
+            return
+
+        # Create course selection dialog
+        dialog = tk.Toplevel(self.root)
+        dialog.title("📚 Assign Course")
+        dialog.geometry("400x500")
+        dialog.transient(self.root)
+        dialog.grab_set()
+        dialog.resizable(True, True)
+
+        # Center the dialog
+        dialog.geometry(
+            "+%d+%d" % (self.root.winfo_rootx() + 50, self.root.winfo_rooty() + 50)
+        )
+
+        main_frame = ttk.Frame(dialog, padding="20")
+        main_frame.pack(fill="both", expand=True)
+
+        ttk.Label(
+            main_frame,
+            text=f"📚 Assign course to {person_name}:",
+            font=("Arial", 12, "bold"),
+        ).pack(pady=10)
+
+        # Course selection
+        list_frame = ttk.LabelFrame(main_frame, text="Available Courses", padding="10")
+        list_frame.pack(fill="both", expand=True, pady=10)
+
+        course_listbox = tk.Listbox(list_frame, font=("Arial", 10))
+        course_scroll = ttk.Scrollbar(
+            list_frame, orient="vertical", command=course_listbox.yview
+        )
+        course_listbox.configure(yscrollcommand=course_scroll.set)
+
+        course_listbox.pack(side="left", fill="both", expand=True)
+        course_scroll.pack(side="right", fill="y")
+
+        # Populate with available courses
+        available_courses = []
+        person = next((p for p in self.people_list if p.name == person_name), None)
+        if person:
+            enrolled_course_ids = [id(course_slots) for course_slots in person.schedule]
+            for course_name, course_slots in self.courses.items():
+                if id(course_slots) not in enrolled_course_ids:
+                    available_courses.append(course_name)
+                    course_listbox.insert(tk.END, course_name)
+
+        if not available_courses:
+            course_listbox.insert(
+                tk.END, "No available courses (already enrolled in all)"
+            )
+            course_listbox.config(state="disabled")
+
+        # Course details display
+        details_frame = ttk.LabelFrame(main_frame, text="Course Details", padding="10")
+        details_frame.pack(fill="both", expand=True, pady=10)
+
+        details_text = tk.Text(details_frame, height=8, wrap="word", font=("Arial", 9))
+        details_scroll = ttk.Scrollbar(
+            details_frame, orient="vertical", command=details_text.yview
+        )
+        details_text.configure(yscrollcommand=details_scroll.set)
+
+        details_text.pack(side="left", fill="both", expand=True)
+        details_scroll.pack(side="right", fill="y")
+
+        def show_course_details_preview(event):
+            selection = course_listbox.curselection()
+            if selection and available_courses:
+                course_name = course_listbox.get(selection[0])
+                if course_name in self.courses:
+                    course_slots = self.courses[course_name]
+                    details = f"📚 Course: {course_name}\n\n"
+                    details += "⏰ Schedule:\n"
+                    for slot in sorted(
+                        course_slots,
+                        key=lambda x: (self.days.index(x.day), x.start_time),
+                    ):
+                        details += (
+                            f"  {slot.day}: {slot.start_time} - {slot.end_time}\n"
+                        )
+
+                    details_text.delete("1.0", tk.END)
+                    details_text.insert("1.0", details)
+
+        course_listbox.bind("<<ListboxSelect>>", show_course_details_preview)
+
+        # Buttons
+        button_frame = ttk.Frame(main_frame)
+        button_frame.pack(fill="x", pady=10)
+
+        def assign_selected():
+            selection = course_listbox.curselection()
+            if selection and available_courses:
+                course_name = course_listbox.get(selection[0])
+                if course_name in self.courses:
+                    try:
+                        assign_course_to_person(
+                            self.people_list, person_name, self.courses, course_name
+                        )
+                        self.show_person_schedule(person_name)
+                        self.refresh_schedule_view()
+                        self.save_all_data()
+                        messagebox.showinfo(
+                            "✅ Success", f"Assigned {course_name} to {person_name}"
+                        )
+                        dialog.destroy()
+                    except ValueError as e:
+                        messagebox.showerror("❌ Error", str(e))
+            else:
+                messagebox.showwarning(
+                    "⚠️ No Selection", "Please select a course to assign."
+                )
+
+        ttk.Button(button_frame, text="📚 Assign Course", command=assign_selected).pack(
+            side="left", padx=5
+        )
+        ttk.Button(button_frame, text="❌ Cancel", command=dialog.destroy).pack(
+            side="right", padx=5
+        )
+
+    def remove_course_dialog(self):
+        """Show dialog to remove course from selected person"""
+        selection = self.people_listbox.curselection()
+        if not selection:
+            messagebox.showwarning("⚠️ No Selection", "Please select a person first.")
+            return
+
+        person_name = self.people_listbox.get(selection[0])
+        person = next((p for p in self.people_list if p.name == person_name), None)
+
+        if not person or not person.schedule:
+            messagebox.showwarning(
+                "⚠️ No Courses", f"{person_name} has no courses assigned."
+            )
+            return
+
+        # Create course removal dialog
+        dialog = tk.Toplevel(self.root)
+        dialog.title("❌ Remove Course")
+        dialog.geometry("400x400")
+        dialog.transient(self.root)
+        dialog.grab_set()
+
+        # Center the dialog
+        dialog.geometry(
+            "+%d+%d" % (self.root.winfo_rootx() + 50, self.root.winfo_rooty() + 50)
+        )
+
+        main_frame = ttk.Frame(dialog, padding="20")
+        main_frame.pack(fill="both", expand=True)
+
+        ttk.Label(
+            main_frame,
+            text=f"❌ Remove course from {person_name}:",
+            font=("Arial", 12, "bold"),
+        ).pack(pady=10)
+
+        list_frame = ttk.LabelFrame(main_frame, text="Enrolled Courses", padding="10")
+        list_frame.pack(fill="both", expand=True, pady=10)
+
+        course_listbox = tk.Listbox(list_frame, font=("Arial", 10))
+        course_scroll = ttk.Scrollbar(
+            list_frame, orient="vertical", command=course_listbox.yview
+        )
+        course_listbox.configure(yscrollcommand=course_scroll.set)
+
+        course_listbox.pack(side="left", fill="both", expand=True)
+        course_scroll.pack(side="right", fill="y")
+
+        # Find courses this person is enrolled in
+        person_courses = []
+        for course_name, course_slots in self.courses.items():
+            for person_course in person.schedule:
+                if person_course == course_slots:
+                    person_courses.append(course_name)
+                    break
+
+        for course_name in person_courses:
+            course_listbox.insert(tk.END, course_name)
+
+        if not person_courses:
+            course_listbox.insert(tk.END, "No enrolled courses found")
+            course_listbox.config(state="disabled")
+
+        button_frame = ttk.Frame(main_frame)
+        button_frame.pack(fill="x", pady=10)
+
+        def remove_selected():
+            selection = course_listbox.curselection()
+            if selection and person_courses:
+                course_name = course_listbox.get(selection[0])
+                try:
+                    remove_course_from_person(
+                        self.people_list, person_name, self.courses, course_name
+                    )
+                    self.show_person_schedule(person_name)
+                    self.refresh_schedule_view()
+                    self.save_all_data()
+                    messagebox.showinfo(
+                        "✅ Success", f"Removed {course_name} from {person_name}"
+                    )
+                    dialog.destroy()
+                except ValueError as e:
+                    messagebox.showerror("❌ Error", str(e))
+            else:
+                messagebox.showwarning(
+                    "⚠️ No Selection", "Please select a course to remove."
+                )
+
+        ttk.Button(button_frame, text="❌ Remove Course", command=remove_selected).pack(
+            side="left", padx=5
+        )
+        ttk.Button(button_frame, text="🚫 Cancel", command=dialog.destroy).pack(
+            side="right", padx=5
+        )
+
+    # Course Management Methods
+    def add_course_dialog(self):
+        """Show dialog to add new course"""
+        course_name = simpledialog.askstring("📚 Add Course", "Enter course name:")
+        if course_name and course_name.strip():
+            try:
+                add_course(self.courses, course_name.strip(), [])
+                self.refresh_courses_list()
+                self.save_courses()
+                messagebox.showinfo("✅ Success", f"Added course: {course_name}")
+            except ValueError as e:
+                messagebox.showerror("❌ Error", str(e))
+
+    def edit_course_dialog(self):
+        """Show dialog to edit course name"""
+        selection = self.courses_listbox.curselection()
+        if not selection:
+            messagebox.showwarning("⚠️ No Selection", "Please select a course to edit.")
+            return
+
+        old_name = self.courses_listbox.get(selection[0])
+        new_name = simpledialog.askstring(
+            "✏️ Edit Course", f"Enter new name for {old_name}:", initialvalue=old_name
+        )
+
+        if new_name and new_name.strip() and new_name != old_name:
+            try:
+                # Get the course slots
+                course_slots = self.courses[old_name]
+                # Remove old course
+                remove_course(self.courses, old_name)
+                # Add with new name
+                add_course(self.courses, new_name.strip(), course_slots)
+
+                self.refresh_all()
+                self.save_all_data()
+                messagebox.showinfo(
+                    "✅ Success", f"Renamed course from {old_name} to {new_name}"
+                )
+            except ValueError as e:
+                messagebox.showerror("❌ Error", str(e))
+
+    def delete_course(self):
+        """Delete selected course"""
+        selection = self.courses_listbox.curselection()
+        if not selection:
+            messagebox.showwarning(
+                "⚠️ No Selection", "Please select a course to delete."
+            )
+            return
+
+        course_name = self.courses_listbox.get(selection[0])
+
+        # Check if course is assigned to anyone
+        try:
+            enrolled_people = get_people_in_course(
+                self.people_list, self.courses, course_name
+            )
+            if enrolled_people:
+                if not messagebox.askyesno(
+                    "⚠️ Course In Use",
+                    f"Course '{course_name}' is assigned to {len(enrolled_people)} people:\n"
+                    + f"{', '.join(enrolled_people)}\n\n"
+                    + f"Deleting this course will remove it from all people. Continue?",
+                ):
+                    return
+        except:
+            pass
+
+        if messagebox.askyesno(
+            "🗑️ Confirm Delete",
+            f"Are you sure you want to delete course '{course_name}'?",
+        ):
+            try:
+                course_slots = self.courses[course_name]
+
+                # Remove course from all people first
+                for person in self.people_list[:]:
+                    person.schedule = [
+                        course for course in person.schedule if course != course_slots
+                    ]
+                    person.busy_time = person._create_busy_time_dict()
+
+                # Remove the course
+                remove_course(self.courses, course_name)
+
+                self.refresh_all()
+                self.course_name_label.config(text="Select a course to view details")
+
+                # Clear course details
+                for item in self.course_slots_tree.get_children():
+                    self.course_slots_tree.delete(item)
+                self.enrolled_text.delete("1.0", tk.END)
+
+                self.save_all_data()
+                messagebox.showinfo("✅ Success", f"Deleted course: {course_name}")
+            except ValueError as e:
+                messagebox.showerror("❌ Error", str(e))
+
+    def add_course_time_slot(self):
+        """Add time slot to selected course"""
+        selection = self.courses_listbox.curselection()
+        if not selection:
+            messagebox.showwarning("⚠️ No Selection", "Please select a course first.")
+            return
+
+        course_name = self.courses_listbox.get(selection[0])
+        day = self.course_day_var.get()
+        start_time = self.course_start_var.get().strip()
+        end_time = self.course_end_var.get().strip()
+
+        try:
+            if not all([day, start_time, end_time]):
+                raise ValueError("All fields must be filled")
+
+            # Validate time format
+            if ":" not in start_time or ":" not in end_time:
+                raise ValueError("Time must be in HH:MM format")
+
+            # Create new time slot
+            new_slot = TimeSlot(start_time, end_time, day)
+
+            # Add to course
+            self.courses[course_name].append(new_slot)
+
+            # Update all people who have this course
+            for person in self.people_list:
+                for course_slots in person.schedule:
+                    if course_slots == self.courses[course_name]:
+                        person.busy_time = person._create_busy_time_dict()
+
+            self.show_course_details(course_name)
+            self.refresh_schedule_view()
+            self.save_courses()
+            messagebox.showinfo(
+                "✅ Success",
+                f"Added time slot to {course_name}: {day} {start_time}-{end_time}",
+            )
+
+        except Exception as e:
+            messagebox.showerror("❌ Error", f"Failed to add time slot: {str(e)}")
+
+    def remove_course_time_slot(self):
+        """Remove selected time slot from course"""
+        course_selection = self.courses_listbox.curselection()
+        if not course_selection:
+            messagebox.showwarning("⚠️ No Selection", "Please select a course first.")
+            return
+
+        slot_selection = self.course_slots_tree.selection()
+        if not slot_selection:
+            messagebox.showwarning(
+                "⚠️ No Selection", "Please select a time slot to remove."
+            )
+            return
+
+        course_name = self.courses_listbox.get(course_selection[0])
+        slot_item = slot_selection[0]
+        slot_values = self.course_slots_tree.item(slot_item)["values"]
+
+        if messagebox.askyesno(
+            "🗑️ Confirm Remove",
+            f"Remove {slot_values[0]} {slot_values[1]}-{slot_values[2]} from {course_name}?",
+        ):
+            try:
+                # Find and remove the slot
+                course_slots = self.courses[course_name]
+                for i, slot in enumerate(course_slots):
+                    if (
+                        slot.day == slot_values[0]
+                        and slot.start_time == slot_values[1]
+                        and slot.end_time == slot_values[2]
+                    ):
+                        course_slots.pop(i)
+                        break
+
+                # Update all people who have this course
+                for person in self.people_list:
+                    for course_slots in person.schedule:
+                        if course_slots == self.courses[course_name]:
+                            person.busy_time = person._create_busy_time_dict()
+
+                self.show_course_details(course_name)
+                self.refresh_schedule_view()
+                self.save_courses()
+                messagebox.showinfo(
+                    "✅ Success", f"Removed time slot from {course_name}"
+                )
+
+            except Exception as e:
+                messagebox.showerror(
+                    "❌ Error", f"Failed to remove time slot: {str(e)}"
+                )
+
+    # Common Times Methods
+    def find_common_times(self):
+        """Find common free times for selected day"""
+        day = self.common_day_var.get()
+
+        if not self.people_list:
+            self.results_text.delete("1.0", tk.END)
+            self.results_text.insert(
+                "1.0", "⚠️ No people added yet. Please add people first."
+            )
+            return
+
+        common_times = common_free_times(self.people_list, day)
+
+        self.results_text.delete("1.0", tk.END)
+
+        result_text = f"🔍 Common free times for {day}\n"
+        result_text += "=" * (len(day) + 25) + "\n\n"
+
+        if common_times:
+            result_text += (
+                f"✅ Found {len(common_times)} common free time period(s):\n\n"
+            )
+            for i, (start, end) in enumerate(common_times, 1):
+                result_text += f"  {i}. ⏰ {start} - {end}\n"
+        else:
+            result_text += "❌ No common free times found for this day.\n"
+            result_text += (
+                "\n💡 This means all people have conflicting schedules on this day."
+            )
+
+        result_text += f"\n👥 Checked schedules for {len(self.people_list)} people:\n"
+        for person in self.people_list:
+            result_text += f"  • {person.name}\n"
+
+        self.results_text.insert("1.0", result_text)
+
+    def show_all_common_times(self):
+        """Show common free times for all days"""
+        if not self.people_list:
+            self.results_text.delete("1.0", tk.END)
+            self.results_text.insert(
+                "1.0",
+                "⚠️ No people added yet. Please add people first to find common times.",
+            )
+            return
+
+        self.results_text.delete("1.0", tk.END)
+
+        result_text = f"📅 Common Free Times - Weekly Summary\n"
+        result_text += "=" * 50 + "\n"
+        result_text += f"👥 Analyzing schedules for {len(self.people_list)} people: "
+        result_text += ", ".join([person.name for person in self.people_list])
+        result_text += "\n" + "=" * 50 + "\n\n"
+
+        total_common_slots = 0
+
+        for day in self.days:
+            common_times = common_free_times(self.people_list, day)
+            result_text += f"📅 {day}:\n"
+
+            if common_times:
+                total_common_slots += len(common_times)
+                for i, (start, end) in enumerate(common_times, 1):
+                    result_text += f"   ✅ {start} - {end}\n"
+            else:
+                result_text += f"   ❌ No common free times\n"
+
+            result_text += "\n"
+
+        # Add summary
+        result_text += "📊 SUMMARY:\n"
+        result_text += f"   • Total common time slots: {total_common_slots}\n"
+        result_text += f"   • Days with common times: {sum(1 for day in self.days if common_free_times(self.people_list, day))}\n"
+        result_text += f"   • People analyzed: {len(self.people_list)}\n"
+
+        if total_common_slots == 0:
+            result_text += "\n💡 Tips for finding common times:\n"
+            result_text += "   • Check if people have too many overlapping courses\n"
+            result_text += (
+                "   • Consider removing some courses or adjusting schedules\n"
+            )
+            result_text += "   • Try looking at weekend days (Saturday/Sunday)\n"
+
+        self.results_text.insert("1.0", result_text)
+
+    # Save/Load Methods
+    def save_all_data(self):
+        """Save both people and courses data"""
+        try:
+            save_data(self.people_list, self.data_file)
+            save_courses(self.courses, self.data_file)
+        except Exception as e:
+            messagebox.showerror("💾 Save Error", f"Failed to save data: {str(e)}")
+
+    def save_courses(self):
+        """Save courses data to file"""
+        try:
+            save_courses(self.courses, self.data_file)
+        except Exception as e:
+            messagebox.showerror("💾 Save Error", f"Failed to save courses: {str(e)}")
+
+    def run(self):
+        """Start the GUI main loop"""
+        try:
+            self.root.mainloop()
+        except KeyboardInterrupt:
+            self.root.quit()
+
+
+def launch_gui(people_list, data_file="schedule_data.json"):
+    """Launch the schedule manager GUI"""
+    app = ScheduleManagerGUI(people_list, data_file)
+    app.run()
