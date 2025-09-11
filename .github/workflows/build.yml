@@ -42,7 +42,7 @@ jobs:
         run: pip install pyinstaller
 
       - name: Build macOS app
-        run: pyinstaller --onefile --add-data "schedule_data.json:." main.py
+        run: pyinstaller --onefile --windowed --add-data "schedule_data.json:." main.py
 
       - name: Upload macOS artifact
         uses: actions/upload-artifact@v4
