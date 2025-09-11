@@ -61,7 +61,7 @@ class ScheduleManagerGUI:
     def create_schedule_tab(self):
         """Create the main schedule viewing tab"""
         schedule_frame = ttk.Frame(self.notebook)
-        self.notebook.add(schedule_frame, text="📅 Schedules")
+        self.notebook.add(schedule_frame, text="Schedules")
 
         # Create main container with scrolling
         main_container = ttk.Frame(schedule_frame)
@@ -106,21 +106,21 @@ class ScheduleManagerGUI:
         button_frame.pack(fill="x", pady=10)
 
         ttk.Button(
-            button_frame, text="🔄 Refresh", command=self.refresh_schedule_view
+            button_frame, text="Refresh", command=self.refresh_schedule_view
         ).pack(side="left", padx=5)
-        ttk.Button(
-            button_frame, text="💾 Save All Data", command=self.save_all_data
-        ).pack(side="left", padx=5)
+        ttk.Button(button_frame, text="Save All Data", command=self.save_all_data).pack(
+            side="left", padx=5
+        )
 
         # Legend
         legend_frame = ttk.LabelFrame(button_frame, text="Legend", padding="5")
         legend_frame.pack(side="right", padx=5)
-        ttk.Label(legend_frame, text="📚 Course schedules | 🆓 Free time").pack()
+        ttk.Label(legend_frame, text="Course schedules | Free time").pack()
 
     def create_people_tab(self):
         """Create the people management tab"""
         people_frame = ttk.Frame(self.notebook)
-        self.notebook.add(people_frame, text="👥 Manage People")
+        self.notebook.add(people_frame, text="Manage People")
 
         # Left side - People list
         left_frame = ttk.LabelFrame(people_frame, text="People", padding="10")
@@ -130,7 +130,7 @@ class ScheduleManagerGUI:
         list_container = ttk.Frame(left_frame)
         list_container.pack(fill="both", expand=True)
 
-        self.people_listbox = tk.Listbox(list_container, height=12, font=("Arial", 10))
+        self.people_listbox = tk.Listbox(list_container, height=12, font=("Arial", 16))
         people_scroll = ttk.Scrollbar(
             list_container, orient="vertical", command=self.people_listbox.yview
         )
@@ -144,12 +144,12 @@ class ScheduleManagerGUI:
         people_btn_frame.pack(fill="x", pady=10)
 
         ttk.Button(
-            people_btn_frame, text="➕ Add Person", command=self.add_person_dialog
+            people_btn_frame, text="Add Person", command=self.add_person_dialog
         ).grid(row=0, column=0, padx=2, pady=2, sticky="ew")
         ttk.Button(
-            people_btn_frame, text="✏️ Edit Name", command=self.edit_person_dialog
+            people_btn_frame, text="Edit Name", command=self.edit_person_dialog
         ).grid(row=0, column=1, padx=2, pady=2, sticky="ew")
-        ttk.Button(people_btn_frame, text="🗑️ Delete", command=self.delete_person).grid(
+        ttk.Button(people_btn_frame, text="Delete", command=self.delete_person).grid(
             row=0, column=2, padx=2, pady=2, sticky="ew"
         )
 
@@ -173,10 +173,10 @@ class ScheduleManagerGUI:
         course_btn_frame.pack(fill="x")
 
         ttk.Button(
-            course_btn_frame, text="📚 Assign Course", command=self.assign_course_dialog
+            course_btn_frame, text="Assign Course", command=self.assign_course_dialog
         ).pack(side="left", padx=5)
         ttk.Button(
-            course_btn_frame, text="❌ Remove Course", command=self.remove_course_dialog
+            course_btn_frame, text="Remove Course", command=self.remove_course_dialog
         ).pack(side="left", padx=5)
 
         # Individual time slot section
@@ -211,7 +211,7 @@ class ScheduleManagerGUI:
         end_entry = ttk.Entry(slot_section, textvariable=self.end_time_var, width=8)
         end_entry.grid(row=0, column=5, sticky="w", padx=5, pady=2)
 
-        ttk.Button(slot_section, text="➕ Add Slot", command=self.add_time_slot).grid(
+        ttk.Button(slot_section, text="Add Slot", command=self.add_time_slot).grid(
             row=0, column=6, padx=10, pady=2
         )
 
@@ -226,7 +226,7 @@ class ScheduleManagerGUI:
         text_frame.pack(fill="both", expand=True)
 
         self.schedule_text = tk.Text(
-            text_frame, height=15, width=50, font=("Consolas", 9), wrap="word"
+            text_frame, height=15, width=50, font=("Consolas", 16), wrap="word"
         )
         schedule_scroll = ttk.Scrollbar(
             text_frame, orient="vertical", command=self.schedule_text.yview
@@ -247,7 +247,7 @@ class ScheduleManagerGUI:
     def create_courses_tab(self):
         """Create the courses management tab"""
         courses_frame = ttk.Frame(self.notebook)
-        self.notebook.add(courses_frame, text="📚 Manage Courses")
+        self.notebook.add(courses_frame, text="Manage Courses")
 
         # Left side - Course list
         left_frame = ttk.LabelFrame(courses_frame, text="Courses", padding="10")
@@ -257,7 +257,7 @@ class ScheduleManagerGUI:
         list_container = ttk.Frame(left_frame)
         list_container.pack(fill="both", expand=True)
 
-        self.courses_listbox = tk.Listbox(list_container, height=12, font=("Arial", 10))
+        self.courses_listbox = tk.Listbox(list_container, height=12, font=("Arial", 16))
         courses_scroll = ttk.Scrollbar(
             list_container, orient="vertical", command=self.courses_listbox.yview
         )
@@ -271,12 +271,12 @@ class ScheduleManagerGUI:
         course_btn_frame.pack(fill="x", pady=10)
 
         ttk.Button(
-            course_btn_frame, text="➕ Add Course", command=self.add_course_dialog
+            course_btn_frame, text="Add Course", command=self.add_course_dialog
         ).grid(row=0, column=0, padx=2, pady=2, sticky="ew")
         ttk.Button(
-            course_btn_frame, text="✏️ Edit Name", command=self.edit_course_dialog
+            course_btn_frame, text="Edit Name", command=self.edit_course_dialog
         ).grid(row=0, column=1, padx=2, pady=2, sticky="ew")
-        ttk.Button(course_btn_frame, text="🗑️ Delete", command=self.delete_course).grid(
+        ttk.Button(course_btn_frame, text="Delete", command=self.delete_course).grid(
             row=0, column=2, padx=2, pady=2, sticky="ew"
         )
 
@@ -292,8 +292,8 @@ class ScheduleManagerGUI:
         self.course_name_label = ttk.Label(
             right_frame,
             text="Select a course to view details",
-            font=("Arial", 12, "bold"),
-            foreground="blue",
+            font=("Arial", 16, "bold"),
+            foreground="#3287a8",
         )
         self.course_name_label.pack(pady=10)
 
@@ -340,11 +340,11 @@ class ScheduleManagerGUI:
         btn_frame = ttk.Frame(slot_mgmt_frame)
         btn_frame.pack(fill="x", pady=5)
 
+        ttk.Button(btn_frame, text="Add Slot", command=self.add_course_time_slot).pack(
+            side="left", padx=5
+        )
         ttk.Button(
-            btn_frame, text="➕ Add Slot", command=self.add_course_time_slot
-        ).pack(side="left", padx=5)
-        ttk.Button(
-            btn_frame, text="🗑️ Remove Selected", command=self.remove_course_time_slot
+            btn_frame, text="Remove Selected", command=self.remove_course_time_slot
         ).pack(side="left", padx=5)
 
         # Course schedule display
@@ -385,7 +385,7 @@ class ScheduleManagerGUI:
         enrolled_container.pack(fill="both", expand=True)
 
         self.enrolled_text = tk.Text(
-            enrolled_container, height=6, width=40, font=("Arial", 9), wrap="word"
+            enrolled_container, height=6, width=40, font=("Arial", 16), wrap="word"
         )
         enrolled_scroll = ttk.Scrollbar(
             enrolled_container, orient="vertical", command=self.enrolled_text.yview
@@ -406,7 +406,7 @@ class ScheduleManagerGUI:
     def create_common_times_tab(self):
         """Create the common free times tab"""
         common_frame = ttk.Frame(self.notebook)
-        self.notebook.add(common_frame, text="🤝 Common Times")
+        self.notebook.add(common_frame, text="Common Times")
 
         # Controls frame
         controls_frame = ttk.LabelFrame(
@@ -418,7 +418,7 @@ class ScheduleManagerGUI:
         control_row = ttk.Frame(controls_frame)
         control_row.pack(fill="x")
 
-        ttk.Label(control_row, text="Select Day:", font=("Arial", 10)).pack(
+        ttk.Label(control_row, text="Select Day:", font=("Arial", 16)).pack(
             side="left", padx=5
         )
         self.common_day_var = tk.StringVar(value="Monday")
@@ -432,13 +432,13 @@ class ScheduleManagerGUI:
         day_combo.pack(side="left", padx=5)
 
         ttk.Button(
-            control_row, text="🔍 Find for Day", command=self.find_common_times
+            control_row, text="Find for Day", command=self.find_common_times
         ).pack(side="left", padx=10)
         ttk.Button(
-            control_row, text="📅 Show All Days", command=self.show_all_common_times
+            control_row, text="Show All Days", command=self.show_all_common_times
         ).pack(side="left", padx=5)
         ttk.Button(
-            control_row, text="🔄 Refresh", command=self.show_all_common_times
+            control_row, text="Refresh", command=self.show_all_common_times
         ).pack(side="left", padx=5)
 
         # Results frame
@@ -452,7 +452,12 @@ class ScheduleManagerGUI:
         text_container.pack(fill="both", expand=True)
 
         self.results_text = tk.Text(
-            text_container, wrap="word", font=("Consolas", 10), bg="#f8f9fa"
+            text_container,
+            wrap="word",
+            font=("Consolas", 16),
+            bg="black",
+            fg="white",
+            insertbackground="black",
         )
         results_scroll = ttk.Scrollbar(
             text_container, orient="vertical", command=self.results_text.yview
@@ -492,7 +497,7 @@ class ScheduleManagerGUI:
                 if day_schedule:
                     row_data.append(", ".join(sorted(day_schedule)))
                 else:
-                    row_data.append("🆓 Free")
+                    row_data.append("Free")
 
             self.schedule_tree.insert("", "end", values=row_data)
 
@@ -558,7 +563,7 @@ class ScheduleManagerGUI:
         if not person:
             return
 
-        schedule_text = f"📋 Schedule for {person_name}\n"
+        schedule_text = f"Schedule for {person_name}\n"
         schedule_text += "=" * (len(person_name) + 20) + "\n\n"
 
         # Group schedule by day
@@ -586,16 +591,14 @@ class ScheduleManagerGUI:
 
         # Display schedule
         for day in self.days:
-            schedule_text += f"📅 {day}:\n"
+            schedule_text += f"{day}:\n"
             if day in schedule_by_day:
                 # Sort by start time
                 day_slots = sorted(schedule_by_day[day], key=lambda x: x["time"])
                 for slot_info in day_slots:
-                    schedule_text += (
-                        f"   📚 {slot_info['time']} - {slot_info['course']}\n"
-                    )
+                    schedule_text += f"   {slot_info['time']} - {slot_info['course']}\n"
             else:
-                schedule_text += "   🆓 Free\n"
+                schedule_text += "   Free\n"
             schedule_text += "\n"
 
         self.schedule_text.insert("1.0", schedule_text)
@@ -605,7 +608,7 @@ class ScheduleManagerGUI:
         if course_name not in self.courses:
             return
 
-        self.course_name_label.config(text=f"📚 Course: {course_name}")
+        self.course_name_label.config(text=f"Course: {course_name}")
 
         # Clear and populate course slots tree
         for item in self.course_slots_tree.get_children():
@@ -626,16 +629,16 @@ class ScheduleManagerGUI:
                 self.people_list, self.courses, course_name
             )
             if enrolled_people:
-                enrolled_text = f"👥 Students enrolled in {course_name}:\n\n"
+                enrolled_text = f"Students enrolled in {course_name}:\n\n"
                 for i, person_name in enumerate(enrolled_people, 1):
                     enrolled_text += f"{i}. {person_name}\n"
-                enrolled_text += f"\n📊 Total: {len(enrolled_people)} students"
+                enrolled_text += f"\nTotal: {len(enrolled_people)} students"
             else:
-                enrolled_text = f"ℹ️ No students currently enrolled in {course_name}"
+                enrolled_text = f"No students currently enrolled in {course_name}"
 
             self.enrolled_text.insert("1.0", enrolled_text)
         except Exception as e:
-            self.enrolled_text.insert("1.0", f"❌ Error loading enrollment: {str(e)}")
+            self.enrolled_text.insert("1.0", f"Error loading enrollment: {str(e)}")
 
     # Person Management Methods
     def add_person_dialog(self):
@@ -646,15 +649,15 @@ class ScheduleManagerGUI:
                 add_person(self.people_list, name.strip())
                 self.refresh_all()
                 self.save_all_data()
-                messagebox.showinfo("✅ Success", f"Added person: {name}")
+                messagebox.showinfo("Success", f"Added person: {name}")
             except ValueError as e:
-                messagebox.showerror("❌ Error", str(e))
+                messagebox.showerror("Error", str(e))
 
     def edit_person_dialog(self):
         """Show dialog to edit person's name"""
         selection = self.people_listbox.curselection()
         if not selection:
-            messagebox.showwarning("⚠️ No Selection", "Please select a person to edit.")
+            messagebox.showwarning("No Selection", "Please select a person to edit.")
             return
 
         old_name = self.people_listbox.get(selection[0])
@@ -668,36 +671,34 @@ class ScheduleManagerGUI:
                 person.name = new_name.strip()
                 self.refresh_all()
                 self.save_all_data()
-                messagebox.showinfo("✅ Success", f"Renamed {old_name} to {new_name}")
+                messagebox.showinfo("Success", f"Renamed {old_name} to {new_name}")
 
     def delete_person(self):
         """Delete selected person"""
         selection = self.people_listbox.curselection()
         if not selection:
-            messagebox.showwarning(
-                "⚠️ No Selection", "Please select a person to delete."
-            )
+            messagebox.showwarning("No Selection", "Please select a person to delete.")
             return
 
         person_name = self.people_listbox.get(selection[0])
 
         if messagebox.askyesno(
-            "🗑️ Confirm Delete", f"Are you sure you want to delete {person_name}?"
+            "Confirm Delete", f"Are you sure you want to delete {person_name}?"
         ):
             try:
                 remove_person(self.people_list, person_name)
                 self.refresh_all()
                 self.schedule_text.delete("1.0", tk.END)
                 self.save_all_data()
-                messagebox.showinfo("✅ Success", f"Deleted person: {person_name}")
+                messagebox.showinfo("Success", f"Deleted person: {person_name}")
             except ValueError as e:
-                messagebox.showerror("❌ Error", str(e))
+                messagebox.showerror("Error", str(e))
 
     def add_time_slot(self):
         """Add individual time slot to selected person"""
         selection = self.people_listbox.curselection()
         if not selection:
-            messagebox.showwarning("⚠️ No Selection", "Please select a person first.")
+            messagebox.showwarning("No Selection", "Please select a person first.")
             return
 
         person_name = self.people_listbox.get(selection[0])
@@ -727,30 +728,30 @@ class ScheduleManagerGUI:
                 self.refresh_schedule_view()
                 self.save_all_data()
                 messagebox.showinfo(
-                    "✅ Success", f"Added time slot: {day} {start_time}-{end_time}"
+                    "Success", f"Added time slot: {day} {start_time}-{end_time}"
                 )
 
         except Exception as e:
-            messagebox.showerror("❌ Error", f"Failed to add time slot: {str(e)}")
+            messagebox.showerror("Error", f"Failed to add time slot: {str(e)}")
 
     def assign_course_dialog(self):
         """Show dialog to assign course to selected person"""
         selection = self.people_listbox.curselection()
         if not selection:
-            messagebox.showwarning("⚠️ No Selection", "Please select a person first.")
+            messagebox.showwarning("No Selection", "Please select a person first.")
             return
 
         person_name = self.people_listbox.get(selection[0])
 
         if not self.courses:
             messagebox.showwarning(
-                "⚠️ No Courses", "No courses available. Please create courses first."
+                "No Courses", "No courses available. Please create courses first."
             )
             return
 
         # Create course selection dialog
         dialog = tk.Toplevel(self.root)
-        dialog.title("📚 Assign Course")
+        dialog.title("Assign Course")
         dialog.geometry("400x500")
         dialog.transient(self.root)
         dialog.grab_set()
@@ -766,15 +767,15 @@ class ScheduleManagerGUI:
 
         ttk.Label(
             main_frame,
-            text=f"📚 Assign course to {person_name}:",
-            font=("Arial", 12, "bold"),
+            text=f"Assign course to {person_name}:",
+            font=("Arial", 16, "bold"),
         ).pack(pady=10)
 
         # Course selection
         list_frame = ttk.LabelFrame(main_frame, text="Available Courses", padding="10")
         list_frame.pack(fill="both", expand=True, pady=10)
 
-        course_listbox = tk.Listbox(list_frame, font=("Arial", 10))
+        course_listbox = tk.Listbox(list_frame, font=("Arial", 16))
         course_scroll = ttk.Scrollbar(
             list_frame, orient="vertical", command=course_listbox.yview
         )
@@ -803,7 +804,7 @@ class ScheduleManagerGUI:
         details_frame = ttk.LabelFrame(main_frame, text="Course Details", padding="10")
         details_frame.pack(fill="both", expand=True, pady=10)
 
-        details_text = tk.Text(details_frame, height=8, wrap="word", font=("Arial", 9))
+        details_text = tk.Text(details_frame, height=8, wrap="word", font=("Arial", 16))
         details_scroll = ttk.Scrollbar(
             details_frame, orient="vertical", command=details_text.yview
         )
@@ -818,8 +819,8 @@ class ScheduleManagerGUI:
                 course_name = course_listbox.get(selection[0])
                 if course_name in self.courses:
                     course_slots = self.courses[course_name]
-                    details = f"📚 Course: {course_name}\n\n"
-                    details += "⏰ Schedule:\n"
+                    details = f"Course: {course_name}\n\n"
+                    details += "Schedule:\n"
                     for slot in sorted(
                         course_slots,
                         key=lambda x: (self.days.index(x.day), x.start_time),
@@ -850,20 +851,20 @@ class ScheduleManagerGUI:
                         self.refresh_schedule_view()
                         self.save_all_data()
                         messagebox.showinfo(
-                            "✅ Success", f"Assigned {course_name} to {person_name}"
+                            "Success", f"Assigned {course_name} to {person_name}"
                         )
                         dialog.destroy()
                     except ValueError as e:
-                        messagebox.showerror("❌ Error", str(e))
+                        messagebox.showerror("Error", str(e))
             else:
                 messagebox.showwarning(
-                    "⚠️ No Selection", "Please select a course to assign."
+                    "No Selection", "Please select a course to assign."
                 )
 
-        ttk.Button(button_frame, text="📚 Assign Course", command=assign_selected).pack(
+        ttk.Button(button_frame, text="Assign Course", command=assign_selected).pack(
             side="left", padx=5
         )
-        ttk.Button(button_frame, text="❌ Cancel", command=dialog.destroy).pack(
+        ttk.Button(button_frame, text="Cancel", command=dialog.destroy).pack(
             side="right", padx=5
         )
 
@@ -871,7 +872,7 @@ class ScheduleManagerGUI:
         """Show dialog to remove course from selected person"""
         selection = self.people_listbox.curselection()
         if not selection:
-            messagebox.showwarning("⚠️ No Selection", "Please select a person first.")
+            messagebox.showwarning("No Selection", "Please select a person first.")
             return
 
         person_name = self.people_listbox.get(selection[0])
@@ -879,13 +880,13 @@ class ScheduleManagerGUI:
 
         if not person or not person.schedule:
             messagebox.showwarning(
-                "⚠️ No Courses", f"{person_name} has no courses assigned."
+                "No Courses", f"{person_name} has no courses assigned."
             )
             return
 
         # Create course removal dialog
         dialog = tk.Toplevel(self.root)
-        dialog.title("❌ Remove Course")
+        dialog.title("Remove Course")
         dialog.geometry("400x400")
         dialog.transient(self.root)
         dialog.grab_set()
@@ -900,14 +901,14 @@ class ScheduleManagerGUI:
 
         ttk.Label(
             main_frame,
-            text=f"❌ Remove course from {person_name}:",
-            font=("Arial", 12, "bold"),
+            text=f"Remove course from {person_name}:",
+            font=("Arial", 16, "bold"),
         ).pack(pady=10)
 
         list_frame = ttk.LabelFrame(main_frame, text="Enrolled Courses", padding="10")
         list_frame.pack(fill="both", expand=True, pady=10)
 
-        course_listbox = tk.Listbox(list_frame, font=("Arial", 10))
+        course_listbox = tk.Listbox(list_frame, font=("Arial", 16))
         course_scroll = ttk.Scrollbar(
             list_frame, orient="vertical", command=course_listbox.yview
         )
@@ -946,46 +947,46 @@ class ScheduleManagerGUI:
                     self.refresh_schedule_view()
                     self.save_all_data()
                     messagebox.showinfo(
-                        "✅ Success", f"Removed {course_name} from {person_name}"
+                        "Success", f"Removed {course_name} from {person_name}"
                     )
                     dialog.destroy()
                 except ValueError as e:
-                    messagebox.showerror("❌ Error", str(e))
+                    messagebox.showerror("Error", str(e))
             else:
                 messagebox.showwarning(
-                    "⚠️ No Selection", "Please select a course to remove."
+                    "No Selection", "Please select a course to remove."
                 )
 
-        ttk.Button(button_frame, text="❌ Remove Course", command=remove_selected).pack(
+        ttk.Button(button_frame, text="Remove Course", command=remove_selected).pack(
             side="left", padx=5
         )
-        ttk.Button(button_frame, text="🚫 Cancel", command=dialog.destroy).pack(
+        ttk.Button(button_frame, text="Cancel", command=dialog.destroy).pack(
             side="right", padx=5
         )
 
     # Course Management Methods
     def add_course_dialog(self):
         """Show dialog to add new course"""
-        course_name = simpledialog.askstring("📚 Add Course", "Enter course name:")
+        course_name = simpledialog.askstring("Add Course", "Enter course name:")
         if course_name and course_name.strip():
             try:
                 add_course(self.courses, course_name.strip(), [])
                 self.refresh_courses_list()
                 self.save_courses()
-                messagebox.showinfo("✅ Success", f"Added course: {course_name}")
+                messagebox.showinfo("Success", f"Added course: {course_name}")
             except ValueError as e:
-                messagebox.showerror("❌ Error", str(e))
+                messagebox.showerror("Error", str(e))
 
     def edit_course_dialog(self):
         """Show dialog to edit course name"""
         selection = self.courses_listbox.curselection()
         if not selection:
-            messagebox.showwarning("⚠️ No Selection", "Please select a course to edit.")
+            messagebox.showwarning("No Selection", "Please select a course to edit.")
             return
 
         old_name = self.courses_listbox.get(selection[0])
         new_name = simpledialog.askstring(
-            "✏️ Edit Course", f"Enter new name for {old_name}:", initialvalue=old_name
+            "Edit Course", f"Enter new name for {old_name}:", initialvalue=old_name
         )
 
         if new_name and new_name.strip() and new_name != old_name:
@@ -1000,18 +1001,16 @@ class ScheduleManagerGUI:
                 self.refresh_all()
                 self.save_all_data()
                 messagebox.showinfo(
-                    "✅ Success", f"Renamed course from {old_name} to {new_name}"
+                    "Success", f"Renamed course from {old_name} to {new_name}"
                 )
             except ValueError as e:
-                messagebox.showerror("❌ Error", str(e))
+                messagebox.showerror("Error", str(e))
 
     def delete_course(self):
         """Delete selected course"""
         selection = self.courses_listbox.curselection()
         if not selection:
-            messagebox.showwarning(
-                "⚠️ No Selection", "Please select a course to delete."
-            )
+            messagebox.showwarning("No Selection", "Please select a course to delete.")
             return
 
         course_name = self.courses_listbox.get(selection[0])
@@ -1023,7 +1022,7 @@ class ScheduleManagerGUI:
             )
             if enrolled_people:
                 if not messagebox.askyesno(
-                    "⚠️ Course In Use",
+                    "Course In Use",
                     f"Course '{course_name}' is assigned to {len(enrolled_people)} people:\n"
                     + f"{', '.join(enrolled_people)}\n\n"
                     + f"Deleting this course will remove it from all people. Continue?",
@@ -1033,7 +1032,7 @@ class ScheduleManagerGUI:
             pass
 
         if messagebox.askyesno(
-            "🗑️ Confirm Delete",
+            "Confirm Delete",
             f"Are you sure you want to delete course '{course_name}'?",
         ):
             try:
@@ -1058,15 +1057,15 @@ class ScheduleManagerGUI:
                 self.enrolled_text.delete("1.0", tk.END)
 
                 self.save_all_data()
-                messagebox.showinfo("✅ Success", f"Deleted course: {course_name}")
+                messagebox.showinfo("Success", f"Deleted course: {course_name}")
             except ValueError as e:
-                messagebox.showerror("❌ Error", str(e))
+                messagebox.showerror("Error", str(e))
 
     def add_course_time_slot(self):
         """Add time slot to selected course"""
         selection = self.courses_listbox.curselection()
         if not selection:
-            messagebox.showwarning("⚠️ No Selection", "Please select a course first.")
+            messagebox.showwarning("No Selection", "Please select a course first.")
             return
 
         course_name = self.courses_listbox.get(selection[0])
@@ -1098,24 +1097,24 @@ class ScheduleManagerGUI:
             self.refresh_schedule_view()
             self.save_courses()
             messagebox.showinfo(
-                "✅ Success",
+                "Success",
                 f"Added time slot to {course_name}: {day} {start_time}-{end_time}",
             )
 
         except Exception as e:
-            messagebox.showerror("❌ Error", f"Failed to add time slot: {str(e)}")
+            messagebox.showerror("Error", f"Failed to add time slot: {str(e)}")
 
     def remove_course_time_slot(self):
         """Remove selected time slot from course"""
         course_selection = self.courses_listbox.curselection()
         if not course_selection:
-            messagebox.showwarning("⚠️ No Selection", "Please select a course first.")
+            messagebox.showwarning("No Selection", "Please select a course first.")
             return
 
         slot_selection = self.course_slots_tree.selection()
         if not slot_selection:
             messagebox.showwarning(
-                "⚠️ No Selection", "Please select a time slot to remove."
+                "No Selection", "Please select a time slot to remove."
             )
             return
 
@@ -1124,7 +1123,7 @@ class ScheduleManagerGUI:
         slot_values = self.course_slots_tree.item(slot_item)["values"]
 
         if messagebox.askyesno(
-            "🗑️ Confirm Remove",
+            "Confirm Remove",
             f"Remove {slot_values[0]} {slot_values[1]}-{slot_values[2]} from {course_name}?",
         ):
             try:
@@ -1148,14 +1147,10 @@ class ScheduleManagerGUI:
                 self.show_course_details(course_name)
                 self.refresh_schedule_view()
                 self.save_courses()
-                messagebox.showinfo(
-                    "✅ Success", f"Removed time slot from {course_name}"
-                )
+                messagebox.showinfo("Success", f"Removed time slot from {course_name}")
 
             except Exception as e:
-                messagebox.showerror(
-                    "❌ Error", f"Failed to remove time slot: {str(e)}"
-                )
+                messagebox.showerror("Error", f"Failed to remove time slot: {str(e)}")
 
     # Common Times Methods
     def find_common_times(self):
@@ -1165,7 +1160,7 @@ class ScheduleManagerGUI:
         if not self.people_list:
             self.results_text.delete("1.0", tk.END)
             self.results_text.insert(
-                "1.0", "⚠️ No people added yet. Please add people first."
+                "1.0", "No people added yet. Please add people first."
             )
             return
 
@@ -1173,24 +1168,22 @@ class ScheduleManagerGUI:
 
         self.results_text.delete("1.0", tk.END)
 
-        result_text = f"🔍 Common free times for {day}\n"
+        result_text = f"Common free times for {day}\n"
         result_text += "=" * (len(day) + 25) + "\n\n"
 
         if common_times:
-            result_text += (
-                f"✅ Found {len(common_times)} common free time period(s):\n\n"
-            )
+            result_text += f"Found {len(common_times)} common free time period(s):\n\n"
             for i, (start, end) in enumerate(common_times, 1):
-                result_text += f"  {i}. ⏰ {start} - {end}\n"
+                result_text += f"  {i}. {start} - {end}\n"
         else:
-            result_text += "❌ No common free times found for this day.\n"
+            result_text += "No common free times found for this day.\n"
             result_text += (
-                "\n💡 This means all people have conflicting schedules on this day."
+                "\nThis means all people have conflicting schedules on this day."
             )
 
-        result_text += f"\n👥 Checked schedules for {len(self.people_list)} people:\n"
+        result_text += f"\nChecked schedules for {len(self.people_list)} people:\n"
         for person in self.people_list:
-            result_text += f"  • {person.name}\n"
+            result_text += f"  - {person.name}\n"
 
         self.results_text.insert("1.0", result_text)
 
@@ -1200,15 +1193,15 @@ class ScheduleManagerGUI:
             self.results_text.delete("1.0", tk.END)
             self.results_text.insert(
                 "1.0",
-                "⚠️ No people added yet. Please add people first to find common times.",
+                "No people added yet. Please add people first to find common times.",
             )
             return
 
         self.results_text.delete("1.0", tk.END)
 
-        result_text = f"📅 Common Free Times - Weekly Summary\n"
+        result_text = f"Common Free Times - Weekly Summary\n"
         result_text += "=" * 50 + "\n"
-        result_text += f"👥 Analyzing schedules for {len(self.people_list)} people: "
+        result_text += f"Analyzing schedules for {len(self.people_list)} people: "
         result_text += ", ".join([person.name for person in self.people_list])
         result_text += "\n" + "=" * 50 + "\n\n"
 
@@ -1216,30 +1209,30 @@ class ScheduleManagerGUI:
 
         for day in self.days:
             common_times = common_free_times(self.people_list, day)
-            result_text += f"📅 {day}:\n"
+            result_text += f"{day}:\n"
 
             if common_times:
                 total_common_slots += len(common_times)
                 for i, (start, end) in enumerate(common_times, 1):
-                    result_text += f"   ✅ {start} - {end}\n"
+                    result_text += f"   {start} - {end}\n"
             else:
-                result_text += f"   ❌ No common free times\n"
+                result_text += f"   No common free times\n"
 
             result_text += "\n"
 
         # Add summary
-        result_text += "📊 SUMMARY:\n"
-        result_text += f"   • Total common time slots: {total_common_slots}\n"
-        result_text += f"   • Days with common times: {sum(1 for day in self.days if common_free_times(self.people_list, day))}\n"
-        result_text += f"   • People analyzed: {len(self.people_list)}\n"
+        result_text += "SUMMARY:\n"
+        result_text += f"   - Total common time slots: {total_common_slots}\n"
+        result_text += f"   - Days with common times: {sum(1 for day in self.days if common_free_times(self.people_list, day))}\n"
+        result_text += f"   - People analyzed: {len(self.people_list)}\n"
 
         if total_common_slots == 0:
-            result_text += "\n💡 Tips for finding common times:\n"
-            result_text += "   • Check if people have too many overlapping courses\n"
+            result_text += "\nTips for finding common times:\n"
+            result_text += "   - Check if people have too many overlapping courses\n"
             result_text += (
-                "   • Consider removing some courses or adjusting schedules\n"
+                "   - Consider removing some courses or adjusting schedules\n"
             )
-            result_text += "   • Try looking at weekend days (Saturday/Sunday)\n"
+            result_text += "   - Try looking at weekend days (Saturday/Sunday)\n"
 
         self.results_text.insert("1.0", result_text)
 
@@ -1250,14 +1243,14 @@ class ScheduleManagerGUI:
             save_data(self.people_list, self.data_file)
             save_courses(self.courses, self.data_file)
         except Exception as e:
-            messagebox.showerror("💾 Save Error", f"Failed to save data: {str(e)}")
+            messagebox.showerror("Save Error", f"Failed to save data: {str(e)}")
 
     def save_courses(self):
         """Save courses data to file"""
         try:
             save_courses(self.courses, self.data_file)
         except Exception as e:
-            messagebox.showerror("💾 Save Error", f"Failed to save courses: {str(e)}")
+            messagebox.showerror("Save Error", f"Failed to save courses: {str(e)}")
 
     def run(self):
         """Start the GUI main loop"""
