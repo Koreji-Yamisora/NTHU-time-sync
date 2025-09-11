@@ -40,6 +40,75 @@
         "15:30",
         "Wednesday"
       ]
+    ],
+    "International Etiquette": [
+      [
+        "10:10",
+        "12:00",
+        "Monday"
+      ]
+    ],
+    "Form in Nature": [
+      [
+        "13:20",
+        "15:10",
+        "Monday"
+      ]
+    ],
+    "Physics B": [],
+    "Precalculus": [],
+    "Mandarin Basic 2": [],
+    "Mandarin Basic conversation 1-1": [],
+    "Calculus-1": [
+      [
+        "10:10",
+        "12:00",
+        "Tuesday"
+      ],
+      [
+        "19:10",
+        "21:00",
+        "Wednesday"
+      ],
+      [
+        "10:10",
+        "11:00",
+        "Thursday"
+      ]
+    ],
+    "I2P-B": [
+      [
+        "15:30",
+        "17:20",
+        "Monday"
+      ],
+      [
+        "18:30",
+        "20:30",
+        "Tuesday"
+      ],
+      [
+        "14:20",
+        "15:10",
+        "Thursday"
+      ]
+    ],
+    "I2P-A": [
+      [
+        "15:30",
+        "17:20",
+        "Monday"
+      ],
+      [
+        "14:20",
+        "15:10",
+        "Thursday"
+      ],
+      [
+        "18:30",
+        "20:30",
+        "Monday"
+      ]
     ]
   },
   "people": {
@@ -54,6 +123,11 @@
     "Charlie": [
       "course_1",
       "course_2"
+    ],
+    "Xim": [
+      "course_3",
+      "course_4",
+      "course_5"
     ]
   }
 }

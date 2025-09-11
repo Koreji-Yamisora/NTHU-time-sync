@@ -1,17 +1,15 @@
 import tkinter as tk
 from tkinter import ttk, messagebox, simpledialog
-from schedule import common_free_times, print_common_free_times
-from models import Person, TimeSlot
+from schedule import common_free_times
+from models import TimeSlot
 from storage import (
     save_data,
     add_person,
     remove_person,
-    update_person_schedule,
     load_courses,
     save_courses,
     add_course,
     remove_course,
-    update_course,
     assign_course_to_person,
     remove_course_from_person,
     get_people_in_course,
@@ -116,14 +114,255 @@ class ScheduleManagerGUI:
         self.create_courses_tab()
         self.create_common_times_tab()
 
+    def refresh_people_checkboxes(self):
+        """Refresh the people selection checkboxes"""
+        # Clear existing checkboxes
+        print("refreshed called")
+        for widget in self.people_checkboxes_frame.winfo_children():
+            widget.destroy()
+
+        self.people_check_vars.clear()
+
+        # Add checkboxes for each person
+        for i, person in enumerate(self.people_list):
+            var = tk.BooleanVar(value=True)  # Default to selected
+            self.people_check_vars[person.name] = var
+
+            checkbox = ttk.Checkbutton(
+                self.people_checkboxes_frame,
+                text=f"👤 {person.name}",
+                variable=var,
+                command=self.update_selection_summary,
+            )
+            checkbox.grid(row=i, column=0, sticky="w", padx=5, pady=2)
+
+        self.update_selection_summary()
+
+        # Show initial results if people exist
+
+        if self.people_list and not getattr(self, "_common_init_done", False):
+            self.root.after(200, self.show_all_common_times_selected)
+            self._common_init_done = True
+
+    def select_all_people(self):
+        """Select all people checkboxes"""
+        for var in self.people_check_vars.values():
+            var.set(True)
+        self.update_selection_summary()
+
+    def deselect_all_people(self):
+        """Deselect all people checkboxes"""
+        for var in self.people_check_vars.values():
+            var.set(False)
+        self.update_selection_summary()
+
+    def update_selection_summary(self):
+        """Update the selection summary label"""
+        selected_count = sum(1 for var in self.people_check_vars.values() if var.get())
+        total_count = len(self.people_check_vars)
+
+        if selected_count == 0:
+            self.selection_summary_label.config(
+                text="❌ No people selected", foreground="red"
+            )
+        elif selected_count == total_count:
+            self.selection_summary_label.config(
+                text=f"✅ All {total_count} people selected", foreground="green"
+            )
+        else:
+            self.selection_summary_label.config(
+                text=f"🔹 {selected_count} of {total_count} people selected",
+                foreground="blue",
+            )
+
+    def get_selected_people(self):
+        """Get list of selected people objects"""
+        selected_people = []
+        for person in self.people_list:
+            if (
+                person.name in self.people_check_vars
+                and self.people_check_vars[person.name].get()
+            ):
+                selected_people.append(person)
+        return selected_people
+
+    def find_common_times_selected(self):
+        """Find common free times for selected people and selected day"""
+        selected_people = self.get_selected_people()
+        day = self.common_day_var.get()
+
+        if not selected_people:
+            self.results_text.delete("1.0", tk.END)
+            self.results_text.insert(
+                "1.0",
+                "❌ No people selected. Please select at least one person to find common times.",
+            )
+            return
+
+        if len(selected_people) == 1:
+            # Show individual schedule for single person
+            person = selected_people[0]
+            self.results_text.delete("1.0", tk.END)
+
+            result_text = f"👤 Individual Schedule for {person.name} on {day}\n"
+            result_text += "=" * (len(person.name) + len(day) + 30) + "\n\n"
+
+            # Get person's schedule for the day
+            day_slots = []
+            for course_slots in person.schedule:
+                for slot in course_slots:
+                    if slot.day == day:
+                        day_slots.append((slot.start_time, slot.end_time))
+
+            if day_slots:
+                day_slots.sort()
+                result_text += f"📚 Busy times on {day}:\n"
+                for start, end in day_slots:
+                    result_text += f"   🕐 {start} - {end}\n"
+
+                # Show free times (simplified logic)
+                result_text += f"\n🆓 Free times on {day}:\n"
+                result_text += "   (Times not listed above are generally free)\n"
+            else:
+                result_text += f"🆓 {person.name} is completely free on {day}!\n"
+
+            self.results_text.insert("1.0", result_text)
+            return
+
+        # Multiple people - find common times
+        common_times = common_free_times(selected_people, day)
+
+        self.results_text.delete("1.0", tk.END)
+
+        result_text = f"🔍 Common free times for {day}\n"
+        result_text += "=" * (len(day) + 25) + "\n\n"
+
+        result_text += f"👥 Selected people ({len(selected_people)}):\n"
+        for person in selected_people:
+            result_text += f"  • {person.name}\n"
+        result_text += "\n"
+
+        if common_times:
+            result_text += (
+                f"✅ Found {len(common_times)} common free time period(s):\n\n"
+            )
+            total_minutes = 0
+            for i, (start, end) in enumerate(common_times, 1):
+                # Calculate duration
+                start_parts = start.split(":")
+                end_parts = end.split(":")
+                start_minutes = int(start_parts[0]) * 60 + int(start_parts[1])
+                end_minutes = int(end_parts[0]) * 60 + int(end_parts[1])
+                duration = end_minutes - start_minutes
+                total_minutes += duration
+
+                result_text += f"  {i}. ⏰ {start} - {end} ({duration} minutes)\n"
+
+            result_text += f"\n📊 Total common free time: {total_minutes} minutes ({total_minutes / 60:.1f} hours)"
+        else:
+            result_text += "❌ No common free times found for this day.\n"
+            result_text += "\n💡 This means the selected people have conflicting schedules on this day.\n"
+            result_text += "Try selecting fewer people or checking other days."
+
+        self.results_text.insert("1.0", result_text)
+
+    def show_all_common_times_selected(self):
+        """Show common free times for all days with selected people"""
+        selected_people = self.get_selected_people()
+
+        if not selected_people:
+            self.results_text.delete("1.0", tk.END)
+            self.results_text.insert(
+                "1.0",
+                "❌ No people selected. Please select at least one person to find common times.",
+            )
+            return
+
+        self.results_text.delete("1.0", tk.END)
+
+        result_text = "📅 Common Free Times - Weekly Summary\n"
+        result_text += "=" * 50 + "\n"
+        result_text += (
+            f"👥 Analyzing schedules for {len(selected_people)} selected people:\n"
+        )
+        for person in selected_people:
+            result_text += f"  • {person.name}\n"
+        result_text += "=" * 50 + "\n\n"
+
+        total_common_slots = 0
+        total_common_minutes = 0
+
+        for day in self.days:
+            if len(selected_people) == 1:
+                # For single person, show their free/busy status
+                person = selected_people[0]
+                day_slots = []
+                for course_slots in person.schedule:
+                    for slot in course_slots:
+                        if slot.day == day:
+                            day_slots.append((slot.start_time, slot.end_time))
+
+                result_text += f"📅 {day} - {person.name}:\n"
+                if day_slots:
+                    result_text += f"   📚 Has {len(day_slots)} scheduled time(s)\n"
+                else:
+                    result_text += "   🆓 Completely free\n"
+            else:
+                # Multiple people - find common times
+                common_times = common_free_times(selected_people, day)
+                result_text += f"📅 {day}:\n"
+
+                if common_times:
+                    total_common_slots += len(common_times)
+                    day_minutes = 0
+                    for start, end in common_times:
+                        # Calculate duration
+                        start_parts = start.split(":")
+                        end_parts = end.split(":")
+                        start_minutes = int(start_parts[0]) * 60 + int(start_parts[1])
+                        end_minutes = int(end_parts[0]) * 60 + int(end_parts[1])
+                        duration = end_minutes - start_minutes
+                        day_minutes += duration
+                        result_text += f"   ✅ {start} - {end} ({duration}min)\n"
+                    total_common_minutes += day_minutes
+                else:
+                    result_text += "   ❌ No common free times\n"
+
+            result_text += "\n"
+
+        # Add summary
+        if len(selected_people) > 1:
+            result_text += "SUMMARY:\n"
+            result_text += f"   • Total common time slots: {total_common_slots}\n"
+            result_text += f"   • Total common time: {total_common_minutes} minutes ({total_common_minutes / 60:.1f} hours)\n"
+            result_text += f"   • Days with common times: {sum(1 for day in self.days if common_free_times(selected_people, day))}\n"
+            result_text += f"   • People analyzed: {len(selected_people)}\n"
+
+            if total_common_slots == 0:
+                result_text += "\nTips for finding common times:\n"
+                result_text += "   • Try selecting fewer people\n"
+                result_text += (
+                    "   • Check if people have too many overlapping courses\n"
+                )
+                result_text += (
+                    "   • Consider removing some courses or adjusting schedules\n"
+                )
+                result_text += "   • Try looking at weekend days (Saturday/Sunday)\n"
+
+        self.results_text.insert("1.0", result_text)
+
         # Initialize displays
-        self.refresh_all()
+
+        self.refresh_schedule_view()
+        self.refresh_people_list()
+        self.refresh_courses_list()
 
     def refresh_all(self):
         """Refresh all displays"""
         self.refresh_schedule_view()
         self.refresh_people_list()
         self.refresh_courses_list()
+        self.refresh_people_checkboxes()  # ADD this line
 
     def create_schedule_tab(self):
         """Create the main schedule viewing tab"""
@@ -463,26 +702,84 @@ class ScheduleManagerGUI:
         self.courses_listbox.bind("<<ListboxSelect>>", self.on_course_select)
 
     def create_common_times_tab(self):
-        """Create the common free times tab"""
+        """Create the common free times tab with people selection"""
         common_frame = ttk.Frame(self.notebook)
         self.notebook.add(common_frame, text="Common Times")
 
+        # Main container with left and right panels
+        main_container = ttk.Frame(common_frame)
+        main_container.pack(fill="both", expand=True, padx=10, pady=10)
+
+        # Left panel - People selection
+        left_panel = ttk.LabelFrame(main_container, text="Select People", padding="10")
+        left_panel.grid(row=0, column=0, sticky="nsew", padx=(0, 5))
+
+        # Select All / Deselect All buttons
+        select_buttons_frame = ttk.Frame(left_panel)
+        select_buttons_frame.pack(fill="x", pady=(0, 10))
+
+        ttk.Button(
+            select_buttons_frame, text="Select All", command=self.select_all_people
+        ).pack(side="left", padx=(0, 5))
+
+        ttk.Button(
+            select_buttons_frame, text="Deselect All", command=self.deselect_all_people
+        ).pack(side="left", padx=5)
+
+        # People selection with checkboxes
+        self.people_selection_frame = ttk.Frame(left_panel)
+        self.people_selection_frame.pack(fill="both", expand=True)
+
+        # Scrollable frame for people checkboxes
+        people_canvas = tk.Canvas(self.people_selection_frame, height=200)
+        people_scrollbar = ttk.Scrollbar(
+            self.people_selection_frame, orient="vertical", command=people_canvas.yview
+        )
+        self.people_checkboxes_frame = ttk.Frame(people_canvas)
+
+        people_canvas.configure(yscrollcommand=people_scrollbar.set)
+        people_canvas.create_window(
+            (0, 0), window=self.people_checkboxes_frame, anchor="nw"
+        )
+
+        people_canvas.pack(side="left", fill="both", expand=True)
+        people_scrollbar.pack(side="right", fill="y")
+
+        # Update scroll region when frame changes
+        def configure_scroll_region(event):
+            people_canvas.configure(scrollregion=people_canvas.bbox("all"))
+
+        self.people_checkboxes_frame.bind("<Configure>", configure_scroll_region)
+
+        # Store checkbox variables
+        self.people_check_vars = {}
+
+        # Selection summary
+        self.selection_summary_label = ttk.Label(
+            left_panel, text="No people selected", font=("Arial", 9), foreground="gray"
+        )
+        self.selection_summary_label.pack(pady=(10, 0))
+
+        # Right panel - Controls and Results
+        right_panel = ttk.Frame(main_container)
+        right_panel.grid(row=0, column=1, sticky="nsew", padx=(5, 0))
+
         # Controls frame
         controls_frame = ttk.LabelFrame(
-            common_frame, text="Find Common Free Times", padding="15"
+            right_panel, text="Find Common Free Times", padding="15"
         )
-        controls_frame.pack(fill="x", padx=10, pady=10)
+        controls_frame.pack(fill="x", pady=(0, 10))
 
         # Control widgets
-        control_row = ttk.Frame(controls_frame)
-        control_row.pack(fill="x")
+        control_row1 = ttk.Frame(controls_frame)
+        control_row1.pack(fill="x", pady=(0, 10))
 
-        ttk.Label(control_row, text="Select Day:", font=("Arial", 16)).pack(
-            side="left", padx=5
+        ttk.Label(control_row1, text="Select Day:", font=("Arial", 10)).pack(
+            side="left", padx=(0, 5)
         )
         self.common_day_var = tk.StringVar(value="Monday")
         day_combo = ttk.Combobox(
-            control_row,
+            control_row1,
             textvariable=self.common_day_var,
             values=self.days,
             state="readonly",
@@ -490,34 +787,37 @@ class ScheduleManagerGUI:
         )
         day_combo.pack(side="left", padx=5)
 
+        # Action buttons
+        control_row2 = ttk.Frame(controls_frame)
+        control_row2.pack(fill="x")
+
         ttk.Button(
-            control_row, text="Find for Day", command=self.find_common_times
-        ).pack(side="left", padx=10)
+            control_row2,
+            text="Find for Selected Day",
+            command=self.find_common_times_selected,
+        ).pack(side="left", padx=(0, 5))
+
         ttk.Button(
-            control_row, text="Show All Days", command=self.show_all_common_times
+            control_row2,
+            text="Show All Days",
+            command=self.show_all_common_times_selected,
         ).pack(side="left", padx=5)
+
         ttk.Button(
-            control_row, text="Refresh", command=self.show_all_common_times
+            control_row2, text="Refresh", command=self.refresh_people_checkboxes
         ).pack(side="left", padx=5)
 
         # Results frame
         results_frame = ttk.LabelFrame(
-            common_frame, text="Common Free Time Results", padding="10"
+            right_panel, text="Common Free Time Results", padding="10"
         )
-        results_frame.pack(fill="both", expand=True, padx=10, pady=5)
+        results_frame.pack(fill="both", expand=True)
 
         # Text widget for results
         text_container = ttk.Frame(results_frame)
         text_container.pack(fill="both", expand=True)
 
-        self.results_text = tk.Text(
-            text_container,
-            wrap="word",
-            font=("Consolas", 16),
-            bg="black",
-            fg="white",
-            insertbackground="black",
-        )
+        self.results_text = tk.Text(text_container, wrap="word", font=("Consolas", 10))
         results_scroll = ttk.Scrollbar(
             text_container, orient="vertical", command=self.results_text.yview
         )
@@ -526,8 +826,13 @@ class ScheduleManagerGUI:
         self.results_text.pack(side="left", fill="both", expand=True)
         results_scroll.pack(side="right", fill="y")
 
-        # Initialize with all days
-        self.root.after(100, self.show_all_common_times)
+        # Configure grid weights
+        main_container.grid_rowconfigure(0, weight=1)
+        main_container.grid_columnconfigure(0, weight=1)
+        main_container.grid_columnconfigure(1, weight=2)
+
+        # Initialize people checkboxes
+        self.root.after(100, self.refresh_people_checkboxes)
 
     def refresh_schedule_view(self):
         """Refresh the main schedule view"""
@@ -811,7 +1116,7 @@ class ScheduleManagerGUI:
         # Create course selection dialog
         dialog = tk.Toplevel(self.root)
         dialog.title("Assign Course")
-        dialog.geometry("400x500")
+        dialog.geometry("400x600")
         dialog.transient(self.root)
         dialog.grab_set()
         dialog.resizable(True, True)
@@ -861,7 +1166,7 @@ class ScheduleManagerGUI:
 
         # Course details display
         details_frame = ttk.LabelFrame(main_frame, text="Course Details", padding="10")
-        details_frame.pack(fill="both", expand=True, pady=10)
+        details_frame.pack(fill="both", expand=False, pady=10)
 
         details_text = tk.Text(details_frame, height=8, wrap="word", font=("Arial", 16))
         details_scroll = ttk.Scrollbar(
@@ -912,7 +1217,8 @@ class ScheduleManagerGUI:
                         messagebox.showinfo(
                             "Success", f"Assigned {course_name} to {person_name}"
                         )
-                        dialog.destroy()
+                        # dialog.destroy()
+                        course_listbox.delete(selection[0])
                     except ValueError as e:
                         messagebox.showerror("Error", str(e))
             else:
@@ -946,7 +1252,7 @@ class ScheduleManagerGUI:
         # Create course removal dialog
         dialog = tk.Toplevel(self.root)
         dialog.title("Remove Course")
-        dialog.geometry("400x400")
+        dialog.geometry("400x600")
         dialog.transient(self.root)
         dialog.grab_set()
 
@@ -1008,7 +1314,7 @@ class ScheduleManagerGUI:
                     messagebox.showinfo(
                         "Success", f"Removed {course_name} from {person_name}"
                     )
-                    dialog.destroy()
+                # dialog.destroy()
                 except ValueError as e:
                     messagebox.showerror("Error", str(e))
             else:
@@ -1084,7 +1390,7 @@ class ScheduleManagerGUI:
                     "Course In Use",
                     f"Course '{course_name}' is assigned to {len(enrolled_people)} people:\n"
                     + f"{', '.join(enrolled_people)}\n\n"
-                    + f"Deleting this course will remove it from all people. Continue?",
+                    + "Deleting this course will remove it from all people. Continue?",
                 ):
                     return
         except:
@@ -1258,7 +1564,7 @@ class ScheduleManagerGUI:
 
         self.results_text.delete("1.0", tk.END)
 
-        result_text = f"Common Free Times - Weekly Summary\n"
+        result_text = "Common Free Times - Weekly Summary\n"
         result_text += "=" * 50 + "\n"
         result_text += f"Analyzing schedules for {len(self.people_list)} people: "
         result_text += ", ".join([person.name for person in self.people_list])
@@ -1275,7 +1581,7 @@ class ScheduleManagerGUI:
                 for i, (start, end) in enumerate(common_times, 1):
                     result_text += f"   {start} - {end}\n"
             else:
-                result_text += f"   No common free times\n"
+                result_text += "   No common free times\n"
 
             result_text += "\n"
 
@@ -1296,13 +1602,6 @@ class ScheduleManagerGUI:
         self.results_text.insert("1.0", result_text)
 
     # Save/Load Methods
-    def save_all_data(self):
-        """Save both people and courses data"""
-        try:
-            save_data(self.people_list, self.data_file)
-            save_courses(self.courses, self.data_file)
-        except Exception as e:
-            messagebox.showerror("Save Error", f"Failed to save data: {str(e)}")
 
     def save_courses(self):
         """Save courses data to file"""
@@ -1310,6 +1609,14 @@ class ScheduleManagerGUI:
             save_courses(self.courses, self.data_file)
         except Exception as e:
             messagebox.showerror("Save Error", f"Failed to save courses: {str(e)}")
+
+    def save_all_data(self):
+        """Save both people and courses data"""
+        try:
+            save_data(self.people_list, self.data_file)
+            save_courses(self.courses, self.data_file)
+        except Exception as e:
+            messagebox.showerror("Save Error", f"Failed to save data: {str(e)}")
 
     def run(self):
         """Start the GUI main loop"""
