@@ -55,10 +55,27 @@
         "Monday"
       ]
     ],
-    "Physics B": [],
+    "Physics B": [
+      [
+        "08:30",
+        "09:50",
+        "Tuesday"
+      ],
+      [
+        "08:30",
+        "09:50",
+        "Friday"
+      ]
+    ],
     "Precalculus": [],
     "Mandarin Basic 2": [],
-    "Mandarin Basic conversation 1-1": [],
+    "Mandarin Basic conversation 1-1": [
+      [
+        "15:30",
+        "17:20",
+        "Wednesday"
+      ]
+    ],
     "Calculus-1": [
       [
         "10:10",
