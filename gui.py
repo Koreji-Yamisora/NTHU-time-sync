@@ -48,7 +48,7 @@ class TimePickerFrame(ttk.Frame):
             textvariable=self.minute_var,
             format="%02.0f",
             wrap=True,
-            increment=15,  # 15-minute increments
+            increment=10,  # 10-minute increments
         )
         self.minute_spin.pack(side="left")
 
