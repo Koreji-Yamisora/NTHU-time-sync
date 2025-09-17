@@ -151,15 +151,15 @@ class ScheduleManagerGUI:
 
         if selected_count == 0:
             self.selection_summary_label.config(
-                text="❌ No people selected", foreground="red"
+                text="No people selected", foreground="red"
             )
         elif selected_count == total_count:
             self.selection_summary_label.config(
-                text=f"✅ All {total_count} people selected", foreground="green"
+                text=f"All {total_count} people selected", foreground="green"
             )
         else:
             self.selection_summary_label.config(
-                text=f"🔹 {selected_count} of {total_count} people selected",
+                text=f"{selected_count} of {total_count} people selected",
                 foreground="blue",
             )
 
@@ -183,7 +183,7 @@ class ScheduleManagerGUI:
             self.results_text.delete("1.0", tk.END)
             self.results_text.insert(
                 "1.0",
-                "❌ No people selected. Please select at least one person to find common times.",
+                "No people selected. Please select at least one person to find common times.",
             )
             return
 
@@ -231,9 +231,7 @@ class ScheduleManagerGUI:
         result_text += "\n"
 
         if common_times:
-            result_text += (
-                f"✅ Found {len(common_times)} common free time period(s):\n\n"
-            )
+            result_text += f"Found {len(common_times)} common free time period(s):\n\n"
             total_minutes = 0
             for i, (start, end) in enumerate(common_times, 1):
                 # Calculate duration
@@ -244,12 +242,12 @@ class ScheduleManagerGUI:
                 duration = end_minutes - start_minutes
                 total_minutes += duration
 
-                result_text += f"  {i}. ⏰ {start} - {end} ({duration} minutes)\n"
+                result_text += f"  {i}. {start} - {end} ({duration} minutes)\n"
 
-            result_text += f"\n📊 Total common free time: {total_minutes} minutes ({total_minutes / 60:.1f} hours)"
+            result_text += f"\nTotal common free time: {total_minutes} minutes ({total_minutes / 60:.1f} hours)"
         else:
-            result_text += "❌ No common free times found for this day.\n"
-            result_text += "\n💡 This means the selected people have conflicting schedules on this day.\n"
+            result_text += "No common free times found for this day.\n"
+            result_text += "\nThis means the selected people have conflicting schedules on this day.\n"
             result_text += "Try selecting fewer people or checking other days."
 
         self.results_text.insert("1.0", result_text)
@@ -262,13 +260,13 @@ class ScheduleManagerGUI:
             self.results_text.delete("1.0", tk.END)
             self.results_text.insert(
                 "1.0",
-                "❌ No people selected. Please select at least one person to find common times.",
+                "No people selected. Please select at least one person to find common times.",
             )
             return
 
         self.results_text.delete("1.0", tk.END)
 
-        result_text = "📅 Common Free Times - Weekly Summary\n"
+        result_text = "Common Free Times - Weekly Summary\n"
         result_text += "=" * 50 + "\n"
         result_text += (
             f"👥 Analyzing schedules for {len(selected_people)} selected people:\n"
@@ -290,15 +288,15 @@ class ScheduleManagerGUI:
                         if slot.day == day:
                             day_slots.append((slot.start_time, slot.end_time))
 
-                result_text += f"📅 {day} - {person.name}:\n"
+                result_text += f"{day} - {person.name}:\n"
                 if day_slots:
-                    result_text += f"   📚 Has {len(day_slots)} scheduled time(s)\n"
+                    result_text += f"   Has {len(day_slots)} scheduled time(s)\n"
                 else:
-                    result_text += "   🆓 Completely free\n"
+                    result_text += "   Completely free\n"
             else:
                 # Multiple people - find common times
                 common_times = common_free_times(selected_people, day)
-                result_text += f"📅 {day}:\n"
+                result_text += f"{day}:\n"
 
                 if common_times:
                     total_common_slots += len(common_times)
@@ -311,10 +309,10 @@ class ScheduleManagerGUI:
                         end_minutes = int(end_parts[0]) * 60 + int(end_parts[1])
                         duration = end_minutes - start_minutes
                         day_minutes += duration
-                        result_text += f"   ✅ {start} - {end} ({duration}min)\n"
+                        result_text += f"   {start} - {end} ({duration}min)\n"
                     total_common_minutes += day_minutes
                 else:
-                    result_text += "   ❌ No common free times\n"
+                    result_text += "   No common free times\n"
 
             result_text += "\n"
 
