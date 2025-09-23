@@ -1,17 +1,58 @@
 import json
 import os
 from models import Person, TimeSlot
+import re
 
 
-def import_ics_file(filename, courses, person, people_list):
+# Replace the existing ICS-related functions in storage.py with these corrected versions:
+
+
+def import_ics_file(filename, courses, person_name, people_list):
+    """Import ICS file and create courses and assign them to a person"""
     with open(filename, "r", encoding="utf-8") as f:
-        ics = f.read()
-    events = parse_ics_content(ics)
+        ics_content = f.read()
+
+    events = parse_ics_content(ics_content)
+    if not events:
+        raise ValueError("No events found in ICS file")
+
+    # Group events by course name
+    courses_from_ics = {}
     for event in events:
-        course_name = event.get("course_name", "Unnamed Course")
-        add_course(courses, course_name, [create_time_slot_from_event(event)])
-        add_person(people_list, person)
-        assign_course_to_person(people_list, person, courses, course_name)
+        course_name = event.get("course_name", "Imported Course")
+        if course_name not in courses_from_ics:
+            courses_from_ics[course_name] = []
+
+        time_slot = create_time_slot_from_event(event)
+        courses_from_ics[course_name].append(time_slot)
+
+    # Add courses and assign to person
+    person = get_person(people_list, person_name)
+    if not person:
+        person = add_person(people_list, person_name, [])
+
+    for course_name, time_slots in courses_from_ics.items():
+        # Check if course already exists, if not create it
+        if course_name not in courses:
+            add_course(courses, course_name, time_slots)
+        else:
+            # If course exists, merge time slots
+            existing_slots = courses[course_name]
+            for slot in time_slots:
+                if not any(
+                    existing_slot.start_time == slot.start_time
+                    and existing_slot.end_time == slot.end_time
+                    and existing_slot.day == slot.day
+                    for existing_slot in existing_slots
+                ):
+                    existing_slots.append(slot)
+
+        # Assign course to person if not already assigned
+        try:
+            assign_course_to_person(people_list, person_name, courses, course_name)
+        except ValueError:
+            # Person already has this course
+            pass
 
 
 def create_time_slot_from_event(event):
@@ -25,6 +66,7 @@ def create_time_slot_from_event(event):
 
 def parse_ics_content(content):
     """Parse ICS content - simple weekly schedule"""
+
     events = []
     lines = content.split("\n")
     lines = [line.strip() for line in lines]
@@ -41,7 +83,7 @@ def parse_ics_content(content):
             current_event = {}
 
         elif line == "END:VEVENT" and in_event:
-            if current_event:
+            if current_event and "start" in current_event and "end" in current_event:
                 events.append(current_event)
             current_event = None
             in_event = False
@@ -60,47 +102,102 @@ def parse_ics_content(content):
                 property_name = full_line[:colon_pos]
                 property_value = full_line[colon_pos + 1 :]
 
+                # Handle parameters (like DTSTART;TZID=...)
+                semicolon_pos = property_name.find(";")
+                if semicolon_pos > 0:
+                    property_name = property_name[:semicolon_pos]
+
                 if property_name == "DTSTART":
                     current_event["start"] = parse_ics_datetime(property_value)
                 elif property_name == "DTEND":
                     current_event["end"] = parse_ics_datetime(property_value)
-                elif property_name == "DESCRIPTION":
-                    # Course name is first line of description
-
-                    first_line = property_value.split("\\n")[0]
-                    current_event["course_name"] = first_line
-                    course_cod = course_code(property_value)
-                    if course_cod:
-                        current_event["course_code"] = course_code
+                elif property_name in ["SUMMARY", "DESCRIPTION"]:
+                    # Use summary first, fall back to description
+                    if "course_name" not in current_event or property_name == "SUMMARY":
+                        # Clean up the course name
+                        course_name = property_value.replace("\\n", " ").replace(
+                            "\\,", ","
+                        )
+                        # Extract course code if available
+                        course_code = extract_course_code(property_value)
+                        if course_code:
+                            current_event["course_name"] = course_code
+                        else:
+                            current_event["course_name"] = course_name.strip()
 
         i += 1
 
     return events
 
 
-def course_code(des):
-    import re
+def extract_course_code(description):
+    """Extract course code from description"""
 
-    cled = des.replace("\n\t", "").replace("\t", "")
-    url_match = re.search(r"https://nthumods\.com/courses/([^\s\\]+)", cled)
+    # Clean up the description
+    cleaned = description.replace("\\n", "\n").replace("\\t", "\t")
+
+    # Look for URL pattern with course code
+    url_match = re.search(r"https://nthumods\.com/courses/([^\s\\]+)", cleaned)
     if url_match:
         url_part = url_match.group(1)
         import urllib.parse
 
         return urllib.parse.unquote(url_part)
 
+    # Look for common course code patterns (e.g., "CS101", "MATH201", etc.)
+    code_patterns = [
+        r"\b([A-Z]{2,4}\s*\d{3,4}[A-Z]?)\b",  # CS101, MATH 201, etc.
+        r"\b([A-Z]{2,4}-\d{3,4})\b",  # CS-101
+        r"\b(\d{6})\b",  # 6-digit codes
+    ]
+
+    for pattern in code_patterns:
+        match = re.search(pattern, cleaned, re.IGNORECASE)
+        if match:
+            return match.group(1).upper()
+
+    return None
+
 
 def parse_ics_datetime(datetime_str):
-    """Generate TImeSlot"""
+    """Parse ICS datetime string to Python datetime object"""
     from datetime import datetime
 
-    if datetime_str.endwith("Z"):
+    # Remove timezone info if present
+    if datetime_str.endswith("Z"):
         datetime_str = datetime_str[:-1]
-    day = int(datetime_str[6:8])
-    hour = int(datetime_str[9:11])
-    minute = int(datetime_str[11:13])
 
-    return datetime(day, hour, minute)
+    # Handle different datetime formats
+    formats_to_try = [
+        "%Y%m%dT%H%M%S",  # 20231025T140000
+        "%Y%m%d",  # 20231025 (date only)
+    ]
+
+    for fmt in formats_to_try:
+        try:
+            return datetime.strptime(datetime_str, fmt)
+        except ValueError:
+            continue
+
+    # If no format works, try to parse manually
+    if len(datetime_str) >= 8:
+        try:
+            year = int(datetime_str[:4])
+            month = int(datetime_str[4:6])
+            day = int(datetime_str[6:8])
+
+            if len(datetime_str) >= 15:  # Has time component
+                hour = int(datetime_str[9:11])
+                minute = int(datetime_str[11:13])
+                second = int(datetime_str[13:15]) if len(datetime_str) >= 15 else 0
+                return datetime(year, month, day, hour, minute, second)
+            else:
+                return datetime(year, month, day, 9, 0)  # Default to 9 AM for date-only
+
+        except (ValueError, IndexError):
+            pass
+
+    raise ValueError(f"Unable to parse datetime: {datetime_str}")
 
 
 def load_data(filename):

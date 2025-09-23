@@ -1,8 +1,9 @@
 import tkinter as tk
-from tkinter import ttk, messagebox, simpledialog
+from tkinter import ttk, messagebox, simpledialog, filedialog
 from schedule import common_free_times
 from models import TimeSlot
 from storage import *
+import os
 
 
 class TimePickerFrame(ttk.Frame):
@@ -131,6 +132,144 @@ class ScheduleManagerGUI:
         if self.people_list and not getattr(self, "_common_init_done", False):
             self.root.after(200, self.show_all_common_times_selected)
             self._common_init_done = True
+
+    def create_import_dialog(self):
+        """Show dialog to import ICS file"""
+
+        # First, let user select ICS file
+        filetypes = [("ICS files", "*.ics"), ("All files", "*.*")]
+        ics_file = filedialog.askopenfilename(
+            title="Select ICS Calendar File", filetypes=filetypes, parent=self.root
+        )
+
+        if not ics_file:
+            return  # User cancelled file selection
+
+        # Check if file exists and is readable
+        if not os.path.exists(ics_file):
+            messagebox.showerror("Error", "Selected file does not exist.")
+            return
+
+        # Create dialog for person name input
+        dialog = tk.Toplevel(self.root)
+        dialog.title("Import ICS File")
+        dialog.geometry("500x250")
+        dialog.transient(self.root)
+        dialog.grab_set()
+        dialog.resizable(False, False)
+
+        # Center the dialog
+        dialog.geometry(
+            "+%d+%d" % (self.root.winfo_rootx() + 100, self.root.winfo_rooty() + 100)
+        )
+
+        main_frame = ttk.Frame(dialog, padding="20")
+        main_frame.pack(fill="both", expand=True)
+
+        # File info
+        ttk.Label(
+            main_frame, text="Import Calendar File:", font=("Arial", 12, "bold")
+        ).pack(anchor="w", pady=(0, 5))
+
+        file_label = ttk.Label(
+            main_frame,
+            text=os.path.basename(ics_file),
+            foreground="blue",
+            font=("Arial", 10),
+        )
+        file_label.pack(anchor="w", pady=(0, 15))
+
+        # Person name input
+        ttk.Label(
+            main_frame, text="Enter name for this person:", font=("Arial", 11)
+        ).pack(anchor="w", pady=(0, 5))
+
+        name_var = tk.StringVar()
+        name_entry = ttk.Entry(
+            main_frame, textvariable=name_var, width=35, font=("Arial", 11)
+        )
+        name_entry.pack(fill="x", pady=(0, 15))
+        name_entry.focus()
+
+        # Info text
+        info_text = "This will import all events from the calendar file and create courses automatically."
+        ttk.Label(
+            main_frame,
+            text=info_text,
+            font=("Arial", 9),
+            foreground="gray",
+            wraplength=450,
+        ).pack(pady=(0, 10))
+
+        # Status label
+        status_var = tk.StringVar()
+        status_label = ttk.Label(
+            main_frame, textvariable=status_var, foreground="gray", font=("Arial", 9)
+        )
+        status_label.pack(pady=(0, 15))
+
+        # Buttons
+        button_frame = ttk.Frame(main_frame)
+        button_frame.pack(fill="x")
+
+        def do_import():
+            person_name = name_var.get().strip()
+
+            if not person_name:
+                messagebox.showwarning("Invalid Input", "Please enter a person name.")
+                name_entry.focus()
+                return
+
+            # Check if person already exists
+            existing_person = any(p.name == person_name for p in self.people_list)
+            if existing_person:
+                if not messagebox.askyesno(
+                    "Person Exists",
+                    f"Person '{person_name}' already exists. Do you want to add the calendar to their existing schedule?",
+                ):
+                    return
+
+            try:
+                status_var.set("Importing calendar...")
+                dialog.update()
+
+                # Import the ICS file
+                from storage import import_ics_file
+
+                import_ics_file(ics_file, self.courses, person_name, self.people_list)
+
+                # Refresh all views
+                self.refresh_all()
+                self.save_all_data()
+
+                status_var.set("Import successful!")
+                messagebox.showinfo(
+                    "Success",
+                    f"Successfully imported calendar for {person_name}!\n\n"
+                    f"New courses have been created and assigned to {person_name}.",
+                )
+                dialog.destroy()
+
+            except Exception as e:
+                status_var.set("Import failed!")
+                messagebox.showerror(
+                    "Import Error", f"Failed to import calendar:\n\n{str(e)}"
+                )
+
+        def cancel_import():
+            dialog.destroy()
+
+        # Bind Enter key to import
+        def on_enter(event):
+            do_import()
+
+        name_entry.bind("<Return>", on_enter)
+        dialog.bind("<Return>", on_enter)
+
+        ttk.Button(button_frame, text="Import", command=do_import).pack(
+            side="left", padx=(0, 10)
+        )
+        ttk.Button(button_frame, text="Cancel", command=cancel_import).pack(side="left")
 
     def select_all_people(self):
         """Select all people checkboxes"""
@@ -438,16 +577,24 @@ class ScheduleManagerGUI:
         ttk.Button(
             people_btn_frame, text="Add Person", command=self.add_person_dialog
         ).grid(row=0, column=0, padx=2, pady=2, sticky="ew")
+
+        ttk.Button(
+            people_btn_frame, text="Import ICS", command=self.create_import_dialog
+        ).grid(row=0, column=1, padx=2, pady=2, sticky="ew")
+
         ttk.Button(
             people_btn_frame, text="Edit Name", command=self.edit_person_dialog
-        ).grid(row=0, column=1, padx=2, pady=2, sticky="ew")
+        ).grid(row=0, column=2, padx=2, pady=2, sticky="ew")
+
         ttk.Button(people_btn_frame, text="Delete", command=self.delete_person).grid(
-            row=0, column=2, padx=2, pady=2, sticky="ew"
+            row=0, column=3, padx=2, pady=2, sticky="ew"
         )
 
+        # Update column configuration for 4 buttons
         people_btn_frame.grid_columnconfigure(0, weight=1)
         people_btn_frame.grid_columnconfigure(1, weight=1)
         people_btn_frame.grid_columnconfigure(2, weight=1)
+        people_btn_frame.grid_columnconfigure(3, weight=1)
 
         # Right side - Schedule editing
         right_frame = ttk.LabelFrame(
