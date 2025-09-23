@@ -1,11 +1,15 @@
-# NTHU Time Sync
+# Group Free Time Scheduler
 
 A modern, cross-platform desktop application for managing schedules and finding common free times among groups of people. Built with Python and PyQt6, featuring an intuitive GUI and automated cross-platform builds.
 
 ## Repository
 
+[![GitHub release](https://img.shields.io/github/v/release/IcyB1ue/Time-Table-Intersection-for-NTHU)](https://github.com/IcyB1ue/Time-Table-Intersection-for-NTHU/releases)
+[IcyB1ue/Time-Table-Intersection-for-NTHU](https://github.com/IcyB1ue/Time-Table-Intersection-for-NTHU)
+
+### Alternative Repository
 [![GitHub release](https://img.shields.io/github/v/release/Koreji-Yamisora/NTHU-time-sync)](https://github.com/Koreji-Yamisora/NTHU-time-sync/releases)
-[Koreji-Yamisora/NTHU-time-sync](https://github.com/Koreji-Yamisora/NTHU-time-sync)
+[Koreji-Yamisora/NTHU-time-sync](https://github.com/Koreji-Yamisora/NTHU-time-sync) - NTHU-focused version
 
 ## Features
 
@@ -28,6 +32,7 @@ A modern, cross-platform desktop application for managing schedules and finding 
 **Note**: This repository is currently private. Pre-built executables are available through the automated release system.
 
 1. **Go to the Releases page** (requires repository access):
+   - [**This Repository**](https://github.com/IcyB1ue/Time-Table-Intersection-for-NTHU/releases) - `IcyB1ue/Time-Table-Intersection-for-NTHU`
    - [**NTHU-time-sync**](https://github.com/Koreji-Yamisora/NTHU-time-sync/releases) - `Koreji-Yamisora/NTHU-time-sync`
 2. **Download the appropriate file** for your operating system:
    - **Windows**: `scheduler-windows-v*.exe` (latest version)
@@ -119,8 +124,8 @@ scheduler/
 **Installation:**
 ```bash
 # Clone the repository (requires repository access)
-git clone https://github.com/Koreji-Yamisora/NTHU-time-sync.git
-cd NTHU-time-sync
+git clone https://github.com/IcyB1ue/Time-Table-Intersection-for-NTHU.git
+cd Time-Table-Intersection-for-NTHU
 
 # Install dependencies and create virtual environment
 uv sync
