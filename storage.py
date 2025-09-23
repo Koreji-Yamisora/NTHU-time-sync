@@ -1,5 +1,8 @@
 import json
 import os
+import base64
+import hashlib
+from cryptography.fernet import Fernet
 from models import Person, TimeSlot
 from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
@@ -9,6 +12,57 @@ import urllib.parse
 
 TAIPEI = ZoneInfo("Asia/Taipei")
 DAY_OFFSET = +1  # shift days manually
+
+# Encryption key (in production, this should be more secure)
+ENCRYPTION_KEY = b'schedule_manager_key_2024_secure_32bytes!'
+
+
+def get_encryption_key():
+    """Generate encryption key from the base key"""
+    key = hashlib.sha256(ENCRYPTION_KEY).digest()
+    return base64.urlsafe_b64encode(key)
+
+
+def encrypt_json_data(data):
+    """Encrypt JSON data"""
+    try:
+        key = get_encryption_key()
+        fernet = Fernet(key)
+        json_str = json.dumps(data, indent=2)
+        encrypted_data = fernet.encrypt(json_str.encode())
+        return base64.b64encode(encrypted_data).decode()
+    except Exception as e:
+        raise Exception(f"Encryption failed: {str(e)}")
+
+
+def decrypt_json_data(encrypted_data):
+    """Decrypt JSON data"""
+    try:
+        key = get_encryption_key()
+        fernet = Fernet(key)
+        encrypted_bytes = base64.b64decode(encrypted_data.encode())
+        decrypted_data = fernet.decrypt(encrypted_bytes)
+        return json.loads(decrypted_data.decode())
+    except Exception as e:
+        raise Exception(f"Decryption failed: {str(e)}")
+
+
+def is_encrypted_json(filename):
+    """Check if a JSON file is encrypted by trying to detect the format"""
+    try:
+        with open(filename, 'r') as f:
+            content = f.read().strip()
+            
+        # Try to parse as regular JSON first
+        json.loads(content)
+        return False
+    except:
+        try:
+            # Try to decrypt - if it works, it's encrypted
+            decrypt_json_data(content)
+            return True
+        except:
+            return False
 
 
 def parse_ics_datetime(datetime_str):
@@ -161,12 +215,23 @@ def import_ics_file(filename, courses, person_name, people_list):
 
 
 def load_data(filename):
-    """Load people and courses from JSON file"""
+    """Load people and courses from JSON file (handles both encrypted and plain JSON)"""
     if not os.path.exists(filename):
         return [], {}
 
     with open(filename, "r") as file:
-        data = json.load(file)
+        content = file.read().strip()
+    
+    # Try to determine if it's encrypted or plain JSON
+    try:
+        # First try to parse as plain JSON
+        data = json.loads(content)
+    except:
+        try:
+            # If that fails, try to decrypt
+            data = decrypt_json_data(content)
+        except Exception as e:
+            raise Exception(f"Failed to load data: File is neither valid JSON nor encrypted data. Error: {str(e)}")
 
     # Load courses
     courses = {}
@@ -188,6 +253,63 @@ def load_data(filename):
 
 def save_data(people_list, courses, filename):
     """Save people and courses to JSON file"""
+    # Convert courses to saveable format
+    courses_data = {}
+    for course_name, slots in courses.items():
+        courses_data[course_name] = [
+            (slot.start_time, slot.end_time, slot.day) for slot in slots
+        ]
+
+    # Create people data with course names
+    people_data = {}
+    for person in people_list:
+        course_names = []
+        for course_slots in person.schedule:
+            # Find the course name that matches these slots
+            for course_name, stored_slots in courses.items():
+                if stored_slots == course_slots:
+                    course_names.append(course_name)
+                    break
+        people_data[person.name] = course_names
+
+    data = {"courses": courses_data, "people": people_data}
+
+    with open(filename, "w") as file:
+        json.dump(data, file, indent=2)
+
+
+def save_data_encrypted(people_list, courses, filename):
+    """Save people and courses to encrypted JSON file"""
+    # Convert courses to saveable format
+    courses_data = {}
+    for course_name, slots in courses.items():
+        courses_data[course_name] = [
+            (slot.start_time, slot.end_time, slot.day) for slot in slots
+        ]
+
+    # Create people data with course names
+    people_data = {}
+    for person in people_list:
+        course_names = []
+        for course_slots in person.schedule:
+            # Find the course name that matches these slots
+            for course_name, stored_slots in courses.items():
+                if stored_slots == course_slots:
+                    course_names.append(course_name)
+                    break
+        people_data[person.name] = course_names
+
+    data = {"courses": courses_data, "people": people_data}
+    
+    # Encrypt the data
+    encrypted_data = encrypt_json_data(data)
+    
+    with open(filename, "w") as file:
+        file.write(encrypted_data)
+
+
+def export_data_plain(people_list, courses, filename):
+    """Export people and courses to plain JSON file"""
     # Convert courses to saveable format
     courses_data = {}
     for course_name, slots in courses.items():

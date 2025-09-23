@@ -5,11 +5,10 @@ Schedule Manager - A tool for managing schedules and finding common free times
 
 import os
 import sys
-import shutil
+import json
 from storage import load_data
 from gui import launch_gui
 from schedule import print_common_free_times
-import json
 
 
 def get_data_file():
@@ -23,24 +22,15 @@ def get_data_file():
     return os.path.join(base_path, "schedule_data.json")
 
 
-def resource_path(relative_path):
-    """Get absolute path to resource, works for PyInstaller"""
-    base_path = getattr(sys, "_MEIPASS", os.path.abspath("."))
-    return os.path.join(base_path, relative_path)
-
-
 def main():
     """Main function to run the schedule manager"""
     data_file = get_data_file()
-    bundled_json = resource_path("schedule_data.json")
-    # Ensure exists
+    
+    # Create blank data if no file exists
     if not os.path.exists(data_file):
-        if os.path.exists(bundled_json):
-            shutil.copy(bundled_json, data_file)
-            print(f"Copied {bundled_json} to {data_file}")
-        else:
-            with open(data_file, "w") as f:
-                json.dump({"courses": {}, "people": {}}, f)
+        with open(data_file, "w") as f:
+            json.dump({"courses": {}, "people": {}}, f)
+        print(f"Created blank schedule data file: {data_file}")
 
     # Load data once and unpack both people and courses
     people_list, courses = load_data(data_file)

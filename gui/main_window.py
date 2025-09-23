@@ -3,13 +3,16 @@ Main Window - PyQt6 Schedule Manager
 """
 
 import sys
-from PyQt6.QtWidgets import QApplication, QMainWindow, QWidget, QVBoxLayout, QTabWidget
+import os
+from PyQt6.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout, QTabWidget,
+                            QMenuBar, QFileDialog, QMessageBox, QHBoxLayout, QPushButton, QLabel)
 from PyQt6.QtCore import Qt
 
 from .schedule_tab import ScheduleTab
 from .people_tab import PeopleTab
 from .courses_tab import CoursesTab
 from .common_times_tab import CommonTimesTab
+from storage import load_data, save_data, save_data_encrypted, export_data_plain
 
 
 class ScheduleManagerPyQt6(QMainWindow):
@@ -36,6 +39,12 @@ class ScheduleManagerPyQt6(QMainWindow):
         self.setWindowTitle("Schedule Manager - PyQt6")
         self.setGeometry(100, 100, 1400, 900)
         self.setMinimumSize(1200, 700)
+        
+        # Create menu bar
+        self.create_menu_bar()
+        
+        # Create toolbar
+        self.create_toolbar()
         
         # Central widget
         central_widget = QWidget()
@@ -311,6 +320,180 @@ class ScheduleManagerPyQt6(QMainWindow):
             }
         """)
     
+    def create_menu_bar(self):
+        """Create the menu bar with File menu"""
+        menubar = self.menuBar()
+        
+        # File menu
+        file_menu = menubar.addMenu('File')
+        
+        # Open action
+        open_action = file_menu.addAction('Open...')
+        open_action.triggered.connect(self.open_data)
+        
+        # Separator
+        file_menu.addSeparator()
+        
+        # Save action (encrypted)
+        save_action = file_menu.addAction('Save')
+        save_action.triggered.connect(self.save_data)
+        
+        # Save As action (encrypted)
+        save_as_action = file_menu.addAction('Save As...')
+        save_as_action.triggered.connect(self.save_data_as)
+        
+        # Separator
+        file_menu.addSeparator()
+        
+        # Export action (plain JSON)
+        export_action = file_menu.addAction('Export...')
+        export_action.triggered.connect(self.export_data)
+        
+        # Separator
+        file_menu.addSeparator()
+        
+        # Exit action
+        exit_action = file_menu.addAction('Exit')
+        exit_action.triggered.connect(self.close)
+    
+    def create_toolbar(self):
+        """Create toolbar with file operation buttons"""
+        toolbar = self.addToolBar('Main')
+        toolbar.setMovable(False)
+        
+        # Open button
+        open_btn = QPushButton('Open...')
+        open_btn.clicked.connect(self.open_data)
+        toolbar.addWidget(open_btn)
+        
+        # Separator
+        toolbar.addSeparator()
+        
+        # Save button (encrypted)
+        save_btn = QPushButton('Save')
+        save_btn.clicked.connect(self.save_data)
+        toolbar.addWidget(save_btn)
+        
+        # Save As button (encrypted)
+        save_as_btn = QPushButton('Save As...')
+        save_as_btn.clicked.connect(self.save_data_as)
+        toolbar.addWidget(save_as_btn)
+        
+        # Separator
+        toolbar.addSeparator()
+        
+        # Export button (plain JSON)
+        export_btn = QPushButton('Export...')
+        export_btn.clicked.connect(self.export_data)
+        toolbar.addWidget(export_btn)
+    
+    def open_data(self):
+        """Open data from JSON file (handles both encrypted and plain JSON)"""
+        file_path, _ = QFileDialog.getOpenFileName(
+            self, 
+            "Open Schedule Data", 
+            "", 
+            "JSON Files (*.json);;All Files (*)"
+        )
+        
+        if file_path:
+            try:
+                # Load data from selected file
+                new_people_list, new_courses = load_data(file_path)
+                
+                # Update the current data
+                self.people_list = new_people_list
+                self.courses = new_courses
+                
+                # Refresh all displays
+                self.refresh_displays()
+                
+                QMessageBox.information(
+                    self, 
+                    "Open Successful", 
+                    f"Successfully opened data from {os.path.basename(file_path)}"
+                )
+                
+            except Exception as e:
+                QMessageBox.critical(
+                    self, 
+                    "Open Error", 
+                    f"Failed to open data: {str(e)}"
+                )
+    
+    def save_data(self):
+        """Save data to current file (encrypted)"""
+        try:
+            save_data_encrypted(self.people_list, self.courses, self.data_file)
+            QMessageBox.information(
+                self, 
+                "Save Successful", 
+                f"Data saved (encrypted) to {os.path.basename(self.data_file)}"
+            )
+        except Exception as e:
+            QMessageBox.critical(
+                self, 
+                "Save Error", 
+                f"Failed to save data: {str(e)}"
+            )
+    
+    def save_data_as(self):
+        """Save data to a new file (encrypted)"""
+        file_path, _ = QFileDialog.getSaveFileName(
+            self, 
+            "Save Schedule Data As", 
+            "schedule_data.json", 
+            "JSON Files (*.json);;All Files (*)"
+        )
+        
+        if file_path:
+            try:
+                # Save current data to selected file (encrypted)
+                save_data_encrypted(self.people_list, self.courses, file_path)
+                
+                # Update the current data file path
+                self.data_file = file_path
+                
+                QMessageBox.information(
+                    self, 
+                    "Save Successful", 
+                    f"Data saved (encrypted) to {os.path.basename(file_path)}"
+                )
+                
+            except Exception as e:
+                QMessageBox.critical(
+                    self, 
+                    "Save Error", 
+                    f"Failed to save data: {str(e)}"
+                )
+    
+    def export_data(self):
+        """Export data to plain JSON file"""
+        file_path, _ = QFileDialog.getSaveFileName(
+            self, 
+            "Export Schedule Data", 
+            "schedule_data_export.json", 
+            "JSON Files (*.json);;All Files (*)"
+        )
+        
+        if file_path:
+            try:
+                # Export current data to selected file (plain JSON)
+                export_data_plain(self.people_list, self.courses, file_path)
+                
+                QMessageBox.information(
+                    self, 
+                    "Export Successful", 
+                    f"Data exported (plain JSON) to {os.path.basename(file_path)}"
+                )
+                
+            except Exception as e:
+                QMessageBox.critical(
+                    self, 
+                    "Export Error", 
+                    f"Failed to export data: {str(e)}"
+                )
+
     def refresh_displays(self):
         """Refresh all displays"""
         self.schedule_tab.refresh_people_list()

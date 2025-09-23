@@ -28,7 +28,7 @@ A modern, cross-platform desktop application for managing schedules and finding 
 
 **Prerequisites:**
 - Python 3.13 or higher
-- pip package manager
+- uv package manager (install from https://docs.astral.sh/uv/getting-started/installation/)
 
 **Installation:**
 ```bash
@@ -36,11 +36,11 @@ A modern, cross-platform desktop application for managing schedules and finding 
 git clone https://github.com/IcyB1ue/Time-Table-Intersection-for-NTHU.git
 cd Time-Table-Intersection-for-NTHU
 
-# Install dependencies
-pip install -e .
+# Install dependencies and create virtual environment
+uv sync
 
 # Run the application
-python main.py
+uv run python main.py
 ```
 
 ## Usage

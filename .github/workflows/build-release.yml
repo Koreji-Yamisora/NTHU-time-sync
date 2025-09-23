@@ -17,19 +17,21 @@ jobs:
         with:
           python-version: '3.13'
 
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          version: "latest"
+
       - name: Install dependencies
         run: |
-          python -m pip install --upgrade pip
-          pip install PyQt6>=6.9.1
-          pip install pyinstaller>=6.15.0
-          pip install -e .
+          uv sync
 
       - name: Build with PyInstaller
         run: |
           echo "Checking PyQt6 installation..."
-          python -c "from PyQt6.QtCore import PYQT_VERSION_STR; print('PyQt6 version:', PYQT_VERSION_STR)"
+          uv run python -c "from PyQt6.QtCore import PYQT_VERSION_STR; print('PyQt6 version:', PYQT_VERSION_STR)"
           echo "Building with PyInstaller..."
-          pyinstaller main.spec
+          uv run pyinstaller main.spec
 
       - name: Rename Windows executable
         run: |
@@ -54,19 +56,21 @@ jobs:
         with:
           python-version: '3.13'
 
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          version: "latest"
+
       - name: Install dependencies
         run: |
-          python -m pip install --upgrade pip
-          pip install PyQt6>=6.9.1
-          pip install pyinstaller>=6.15.0
-          pip install -e .
+          uv sync
 
       - name: Build with PyInstaller
         run: |
           echo "Checking PyQt6 installation..."
-          python -c "from PyQt6.QtCore import PYQT_VERSION_STR; print('PyQt6 version:', PYQT_VERSION_STR)"
+          uv run python -c "from PyQt6.QtCore import PYQT_VERSION_STR; print('PyQt6 version:', PYQT_VERSION_STR)"
           echo "Building with PyInstaller..."
-          pyinstaller main.spec
+          uv run pyinstaller main.spec
 
       - name: Create macOS archive
         run: |

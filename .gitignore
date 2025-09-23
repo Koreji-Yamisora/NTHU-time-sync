@@ -2,3 +2,7 @@ __pycache__
 build
 dist
 .DS_Store
+
+# uv
+.venv
+uv.lock

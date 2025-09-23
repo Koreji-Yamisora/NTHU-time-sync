@@ -1,0 +1,13 @@
+{
+  "people": [
+    {
+      "name": "Test Person",
+      "courses": ["Test Course"]
+    }
+  ],
+  "courses": {
+    "Test Course": [
+      ["09:00", "10:00", "Monday"]
+    ]
+  ]
+}
