@@ -3,6 +3,106 @@ import os
 from models import Person, TimeSlot
 
 
+def import_ics_file(filename, courses, person, people_list):
+    with open(filename, "r", encoding="utf-8") as f:
+        ics = f.read()
+    events = parse_ics_content(ics)
+    for event in events:
+        course_name = event.get("course_name", "Unnamed Course")
+        add_course(courses, course_name, [create_time_slot_from_event(event)])
+        add_person(people_list, person)
+        assign_course_to_person(people_list, person, courses, course_name)
+
+
+def create_time_slot_from_event(event):
+    """Create TimeSlot from single event"""
+    start_dt = event["start"]
+    end_dt = event["end"]
+    day_name = start_dt.strftime("%A")  # Monday, Tuesday, etc.
+
+    return TimeSlot(start_dt.strftime("%H:%M"), end_dt.strftime("%H:%M"), day_name)
+
+
+def parse_ics_content(content):
+    """Parse ICS content - simple weekly schedule"""
+    events = []
+    lines = content.split("\n")
+    lines = [line.strip() for line in lines]
+
+    current_event = None
+    in_event = False
+    i = 0
+
+    while i < len(lines):
+        line = lines[i]
+
+        if line == "BEGIN:VEVENT":
+            in_event = True
+            current_event = {}
+
+        elif line == "END:VEVENT" and in_event:
+            if current_event:
+                events.append(current_event)
+            current_event = None
+            in_event = False
+
+        elif in_event and current_event is not None and ":" in line:
+            # Handle multi-line folding
+            full_line = line
+            while i + 1 < len(lines) and (
+                lines[i + 1].startswith(" ") or lines[i + 1].startswith("\t")
+            ):
+                i += 1
+                full_line += lines[i][1:]
+
+            colon_pos = full_line.find(":")
+            if colon_pos > 0:
+                property_name = full_line[:colon_pos]
+                property_value = full_line[colon_pos + 1 :]
+
+                if property_name == "DTSTART":
+                    current_event["start"] = parse_ics_datetime(property_value)
+                elif property_name == "DTEND":
+                    current_event["end"] = parse_ics_datetime(property_value)
+                elif property_name == "DESCRIPTION":
+                    # Course name is first line of description
+
+                    first_line = property_value.split("\\n")[0]
+                    current_event["course_name"] = first_line
+                    course_cod = course_code(property_value)
+                    if course_cod:
+                        current_event["course_code"] = course_code
+
+        i += 1
+
+    return events
+
+
+def course_code(des):
+    import re
+
+    cled = des.replace("\n\t", "").replace("\t", "")
+    url_match = re.search(r"https://nthumods\.com/courses/([^\s\\]+)", cled)
+    if url_match:
+        url_part = url_match.group(1)
+        import urllib.parse
+
+        return urllib.parse.unquote(url_part)
+
+
+def parse_ics_datetime(datetime_str):
+    """Generate TImeSlot"""
+    from datetime import datetime
+
+    if datetime_str.endwith("Z"):
+        datetime_str = datetime_str[:-1]
+    day = int(datetime_str[6:8])
+    hour = int(datetime_str[9:11])
+    minute = int(datetime_str[11:13])
+
+    return datetime(day, hour, minute)
+
+
 def load_data(filename):
     """Load people and courses from JSON file"""
     if not os.path.exists(filename):
