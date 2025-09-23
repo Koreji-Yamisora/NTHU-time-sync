@@ -69,13 +69,6 @@
     ],
     "Precalculus": [],
     "Mandarin Basic 2": [],
-    "Mandarin Basic conversation 1-1": [
-      [
-        "15:30",
-        "17:20",
-        "Wednesday"
-      ]
-    ],
     "Calculus-1": [
       [
         "10:10",
@@ -125,6 +118,70 @@
         "18:30",
         "20:30",
         "Monday"
+      ]
+    ],
+    "Introduction to Programming in Python": [
+      [
+        "05:20",
+        "07:10",
+        "Monday"
+      ],
+      [
+        "05:20",
+        "06:10",
+        "Wednesday"
+      ]
+    ],
+    "Advanced English: Listening and Speaking": [
+      [
+        "02:10",
+        "04:00",
+        "Tuesday"
+      ]
+    ],
+    "International Etiquette and Cross-Cultural Communication": [
+      [
+        "02:10",
+        "04:00",
+        "Sunday"
+      ]
+    ],
+    "Forms in Nature": [
+      [
+        "05:20",
+        "07:10",
+        "Sunday"
+      ]
+    ],
+    "Calculus I": [
+      [
+        "02:10",
+        "04:00",
+        "Monday"
+      ],
+      [
+        "02:10",
+        "03:00",
+        "Wednesday"
+      ]
+    ],
+    "Physical Education": [
+      [
+        "05:20",
+        "07:10",
+        "Thursday"
+      ]
+    ],
+    "General Physics B (I)": [
+      [
+        "00:00",
+        "01:50",
+        "Monday"
+      ],
+      [
+        "00:00",
+        "01:50",
+        "Thursday"
       ]
     ]
   },

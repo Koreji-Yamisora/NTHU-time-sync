@@ -1,162 +1,6 @@
 import json
 import os
 from models import Person, TimeSlot
-import re
-
-
-# Replace the existing ICS-related functions in storage.py with these corrected versions:
-
-
-def import_ics_file(filename, courses, person_name, people_list):
-    """Import ICS file and create courses and assign them to a person"""
-    with open(filename, "r", encoding="utf-8") as f:
-        ics_content = f.read()
-
-    events = parse_ics_content(ics_content)
-    if not events:
-        raise ValueError("No events found in ICS file")
-
-    # Group events by course name
-    courses_from_ics = {}
-    for event in events:
-        course_name = event.get("course_name", "Imported Course")
-        if course_name not in courses_from_ics:
-            courses_from_ics[course_name] = []
-
-        time_slot = create_time_slot_from_event(event)
-        courses_from_ics[course_name].append(time_slot)
-
-    # Add courses and assign to person
-    person = get_person(people_list, person_name)
-    if not person:
-        person = add_person(people_list, person_name, [])
-
-    for course_name, time_slots in courses_from_ics.items():
-        # Check if course already exists, if not create it
-        if course_name not in courses:
-            add_course(courses, course_name, time_slots)
-        else:
-            # If course exists, merge time slots
-            existing_slots = courses[course_name]
-            for slot in time_slots:
-                if not any(
-                    existing_slot.start_time == slot.start_time
-                    and existing_slot.end_time == slot.end_time
-                    and existing_slot.day == slot.day
-                    for existing_slot in existing_slots
-                ):
-                    existing_slots.append(slot)
-
-        # Assign course to person if not already assigned
-        try:
-            assign_course_to_person(people_list, person_name, courses, course_name)
-        except ValueError:
-            # Person already has this course
-            pass
-
-
-def create_time_slot_from_event(event):
-    """Create TimeSlot from single event"""
-    start_dt = event["start"]
-    end_dt = event["end"]
-    day_name = start_dt.strftime("%A")  # Monday, Tuesday, etc.
-
-    return TimeSlot(start_dt.strftime("%H:%M"), end_dt.strftime("%H:%M"), day_name)
-
-
-def parse_ics_content(content):
-    """Parse ICS content - simple weekly schedule"""
-
-    events = []
-    lines = content.split("\n")
-    lines = [line.strip() for line in lines]
-
-    current_event = None
-    in_event = False
-    i = 0
-
-    while i < len(lines):
-        line = lines[i]
-
-        if line == "BEGIN:VEVENT":
-            in_event = True
-            current_event = {}
-
-        elif line == "END:VEVENT" and in_event:
-            if current_event and "start" in current_event and "end" in current_event:
-                events.append(current_event)
-            current_event = None
-            in_event = False
-
-        elif in_event and current_event is not None and ":" in line:
-            # Handle multi-line folding
-            full_line = line
-            while i + 1 < len(lines) and (
-                lines[i + 1].startswith(" ") or lines[i + 1].startswith("\t")
-            ):
-                i += 1
-                full_line += lines[i][1:]
-
-            colon_pos = full_line.find(":")
-            if colon_pos > 0:
-                property_name = full_line[:colon_pos]
-                property_value = full_line[colon_pos + 1 :]
-
-                # Handle parameters (like DTSTART;TZID=...)
-                semicolon_pos = property_name.find(";")
-                if semicolon_pos > 0:
-                    property_name = property_name[:semicolon_pos]
-
-                if property_name == "DTSTART":
-                    current_event["start"] = parse_ics_datetime(property_value)
-                elif property_name == "DTEND":
-                    current_event["end"] = parse_ics_datetime(property_value)
-                elif property_name in ["SUMMARY", "DESCRIPTION"]:
-                    # Use summary first, fall back to description
-                    if "course_name" not in current_event or property_name == "SUMMARY":
-                        # Clean up the course name
-                        course_name = property_value.replace("\\n", " ").replace(
-                            "\\,", ","
-                        )
-                        # Extract course code if available
-                        course_code = extract_course_code(property_value)
-                        if course_code:
-                            current_event["course_name"] = course_code
-                        else:
-                            current_event["course_name"] = course_name.strip()
-
-        i += 1
-
-    return events
-
-
-def extract_course_code(description):
-    """Extract course code from description"""
-
-    # Clean up the description
-    cleaned = description.replace("\\n", "\n").replace("\\t", "\t")
-
-    # Look for URL pattern with course code
-    url_match = re.search(r"https://nthumods\.com/courses/([^\s\\]+)", cleaned)
-    if url_match:
-        url_part = url_match.group(1)
-        import urllib.parse
-
-        return urllib.parse.unquote(url_part)
-
-    # Look for common course code patterns (e.g., "CS101", "MATH201", etc.)
-    code_patterns = [
-        r"\b([A-Z]{2,4}\s*\d{3,4}[A-Z]?)\b",  # CS101, MATH 201, etc.
-        r"\b([A-Z]{2,4}-\d{3,4})\b",  # CS-101
-        r"\b(\d{6})\b",  # 6-digit codes
-    ]
-
-    for pattern in code_patterns:
-        match = re.search(pattern, cleaned, re.IGNORECASE)
-        if match:
-            return match.group(1).upper()
-
-    return None
 
 
 def parse_ics_datetime(datetime_str):
@@ -198,6 +42,185 @@ def parse_ics_datetime(datetime_str):
             pass
 
     raise ValueError(f"Unable to parse datetime: {datetime_str}")
+
+
+def parse_ics_content(content):
+    """Parse ICS content - use first line of description as course name"""
+    from datetime import datetime
+    import re
+
+    events = []
+    lines = content.split("\n")
+    lines = [line.strip() for line in lines]
+
+    current_event = None
+    in_event = False
+    i = 0
+
+    while i < len(lines):
+        line = lines[i]
+
+        if line == "BEGIN:VEVENT":
+            in_event = True
+            current_event = {}
+
+        elif line == "END:VEVENT" and in_event:
+            if current_event and "start" in current_event and "end" in current_event:
+                # Ensure we have a course name, fallback to summary if no description
+                if "course_name" not in current_event:
+                    current_event["course_name"] = current_event.get(
+                        "summary", "Imported Course"
+                    )
+                events.append(current_event)
+            current_event = None
+            in_event = False
+
+        elif in_event and current_event is not None and ":" in line:
+            # Handle multi-line folding
+            full_line = line
+            while i + 1 < len(lines) and (
+                lines[i + 1].startswith(" ") or lines[i + 1].startswith("\t")
+            ):
+                i += 1
+                full_line += lines[i][1:]
+
+            colon_pos = full_line.find(":")
+            if colon_pos > 0:
+                property_name = full_line[:colon_pos]
+                property_value = full_line[colon_pos + 1 :]
+
+                # Handle parameters (like DTSTART;TZID=...)
+                semicolon_pos = property_name.find(";")
+                if semicolon_pos > 0:
+                    property_name = property_name[:semicolon_pos]
+
+                if property_name == "DTSTART":
+                    current_event["start"] = parse_ics_datetime(property_value)
+                elif property_name == "DTEND":
+                    current_event["end"] = parse_ics_datetime(property_value)
+                elif property_name == "SUMMARY":
+                    # Store summary but don't use as course name yet
+                    current_event["summary"] = (
+                        property_value.replace("\\n", " ").replace("\\,", ",").strip()
+                    )
+                elif property_name == "DESCRIPTION":
+                    # PRIORITY: Use first line of description as course name
+                    description_lines = property_value.replace("\\n", "\n").split("\n")
+                    first_line = description_lines[0].replace("\\,", ",").strip()
+
+                    if first_line:
+                        current_event["course_name"] = first_line
+
+                    # Store full description for potential course code extraction
+                    current_event["full_description"] = property_value
+
+        i += 1
+
+    return events
+
+
+def extract_course_name_and_code(event):
+    """Extract the best course name from an event, preferring description first line"""
+
+    # Priority 1: First line of description (English name)
+    if "course_name" in event:
+        course_name = event["course_name"]
+
+        # Try to also extract course code from full description if available
+        if "full_description" in event:
+            course_code = extract_course_code_from_description(
+                event["full_description"]
+            )
+            if course_code:
+                # You can choose format: "Course Name (CODE)" or just "Course Name"
+                return f"{course_name} ({course_code})"
+                # OR return just the English name: return course_name
+
+        return course_name
+
+    # Priority 2: Summary field
+    if "summary" in event:
+        return event["summary"]
+
+    # Priority 3: Default fallback
+    return "Imported Course"
+
+
+def create_time_slot_from_event(event):
+    """Create TimeSlot from single event"""
+    start_dt = event["start"]
+    end_dt = event["end"]
+    day_name = start_dt.strftime("%A")  # Monday, Tuesday, etc.
+
+    return TimeSlot(start_dt.strftime("%H:%M"), end_dt.strftime("%H:%M"), day_name)
+
+
+def extract_course_code_from_description(description):
+    """Extract course code from full description"""
+    import re
+
+    # Clean up the description
+    cleaned = description.replace("\\n", "\n").replace("\\t", "\t")
+
+    # Look for URL pattern with course code (your original logic)
+    url_match = re.search(r"https://nthumods\.com/courses/([^\s\\]+)", cleaned)
+    if url_match:
+        url_part = url_match.group(1)
+        import urllib.parse
+
+        return urllib.parse.unquote(url_part)
+    return None
+
+
+def import_ics_file(filename, courses, person_name, people_list):
+    """Import ICS file and create courses using description first line as course name"""
+    with open(filename, "r", encoding="utf-8") as f:
+        ics_content = f.read()
+
+    events = parse_ics_content(ics_content)
+    if not events:
+        raise ValueError("No events found in ICS file")
+
+    # Group events by course name (using description first line)
+    courses_from_ics = {}
+    for event in events:
+        course_name = extract_course_name_and_code(
+            event
+        )  # This uses description first line
+
+        if course_name not in courses_from_ics:
+            courses_from_ics[course_name] = []
+
+        time_slot = create_time_slot_from_event(event)
+        courses_from_ics[course_name].append(time_slot)
+
+    # Add courses and assign to person
+    person = get_person(people_list, person_name)
+    if not person:
+        person = add_person(people_list, person_name, [])
+
+    for course_name, time_slots in courses_from_ics.items():
+        # Check if course already exists, if not create it
+        if course_name not in courses:
+            add_course(courses, course_name, time_slots)
+        else:
+            # If course exists, merge time slots
+            existing_slots = courses[course_name]
+            for slot in time_slots:
+                if not any(
+                    existing_slot.start_time == slot.start_time
+                    and existing_slot.end_time == slot.end_time
+                    and existing_slot.day == slot.day
+                    for existing_slot in existing_slots
+                ):
+                    existing_slots.append(slot)
+
+        # Assign course to person if not already assigned
+        try:
+            assign_course_to_person(people_list, person_name, courses, course_name)
+        except ValueError:
+            # Person already has this course
+            pass
 
 
 def load_data(filename):
