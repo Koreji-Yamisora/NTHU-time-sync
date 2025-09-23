@@ -1,53 +1,26 @@
 import json
 import os
 from models import Person, TimeSlot
+from datetime import datetime, timedelta
+from zoneinfo import ZoneInfo
+
+TAIPEI = ZoneInfo("Asia/Taipei")
+DAY_OFFSET = +1  # shift days manually
 
 
 def parse_ics_datetime(datetime_str):
-    """Parse ICS datetime string to Python datetime object"""
-    from datetime import datetime
+    """Parse ICS datetime string to Python datetime object with manual day offset"""
 
-    # Remove timezone info if present
     if datetime_str.endswith("Z"):
-        datetime_str = datetime_str[:-1]
-
-    # Handle different datetime formats
-    formats_to_try = [
-        "%Y%m%dT%H%M%S",  # 20231025T140000
-        "%Y%m%d",  # 20231025 (date only)
-    ]
-
-    for fmt in formats_to_try:
-        try:
-            return datetime.strptime(datetime_str, fmt)
-        except ValueError:
-            continue
-
-    # If no format works, try to parse manually
-    if len(datetime_str) >= 8:
-        try:
-            year = int(datetime_str[:4])
-            month = int(datetime_str[4:6])
-            day = int(datetime_str[6:8])
-
-            if len(datetime_str) >= 15:  # Has time component
-                hour = int(datetime_str[9:11])
-                minute = int(datetime_str[11:13])
-                second = int(datetime_str[13:15]) if len(datetime_str) >= 15 else 0
-                return datetime(year, month, day, hour, minute, second)
-            else:
-                return datetime(year, month, day, 9, 0)  # Default to 9 AM for date-only
-
-        except (ValueError, IndexError):
-            pass
+        dt = datetime.strptime(datetime_str[:-1], "%Y%m%dT%H%M%S")
+        dt = dt.replace(tzinfo=ZoneInfo("UTC")).astimezone(TAIPEI)
+        return dt + timedelta(days=DAY_OFFSET)
 
     raise ValueError(f"Unable to parse datetime: {datetime_str}")
 
 
 def parse_ics_content(content):
     """Parse ICS content - use first line of description as course name"""
-    from datetime import datetime
-    import re
 
     events = []
     lines = content.split("\n")
@@ -147,12 +120,16 @@ def extract_course_name_and_code(event):
 
 
 def create_time_slot_from_event(event):
-    """Create TimeSlot from single event"""
+    """Create TimeSlot from single event with 24-hour format"""
     start_dt = event["start"]
     end_dt = event["end"]
     day_name = start_dt.strftime("%A")  # Monday, Tuesday, etc.
 
-    return TimeSlot(start_dt.strftime("%H:%M"), end_dt.strftime("%H:%M"), day_name)
+    # Format times in 24-hour format (HH:MM)
+    start_time = start_dt.strftime("%H:%M")
+    end_time = end_dt.strftime("%H:%M")
+
+    return TimeSlot(start_time, end_time, day_name)
 
 
 def extract_course_code_from_description(description):
@@ -325,7 +302,21 @@ def get_person(people_list, name):
 
 
 def create_time_slot(start_time, end_time, day):
-    """Helper function to create a TimeSlot"""
+    """Helper function to create a TimeSlot with 24-hour format validation"""
+    # Validate 24-hour format (HH:MM)
+    import re
+
+    time_pattern = r"^([01]?[0-9]|2[0-3]):[0-5][0-9]$"
+
+    if not re.match(time_pattern, start_time):
+        raise ValueError(
+            f"Invalid start_time format: {start_time}. Expected HH:MM (24-hour format)"
+        )
+    if not re.match(time_pattern, end_time):
+        raise ValueError(
+            f"Invalid end_time format: {end_time}. Expected HH:MM (24-hour format)"
+        )
+
     return TimeSlot(start_time, end_time, day)
 
 
@@ -456,8 +447,8 @@ def get_people_in_course(people_list, courses, course_name):
 
 
 def create_sample_data():
-    """Create sample data for testing"""
-    # Create some sample time slots
+    """Create sample data for testing with 24-hour format"""
+    # Create some sample time slots with 24-hour format
     math_slots = [
         TimeSlot("09:00", "10:30", "Monday"),
         TimeSlot("09:00", "10:30", "Wednesday"),
@@ -485,7 +476,7 @@ def create_sample_data():
 
 
 def create_sample_courses():
-    """Create sample courses for testing"""
+    """Create sample courses for testing with 24-hour format"""
     courses = {
         "Mathematics": [
             TimeSlot("09:00", "10:30", "Monday"),
