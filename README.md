@@ -50,25 +50,6 @@ The application uses JSON files to store and manage schedule data. Here's how to
 - **Plain Exports**: Use Export for sharing or backup (unencrypted)
 - **Auto-Detection**: Open automatically detects and handles both formats
 
-### Option 2: Run from Source
-
-**Prerequisites:**
-- Python 3.13 or higher
-- uv package manager (install from https://docs.astral.sh/uv/getting-started/installation/)
-
-**Installation:**
-```bash
-# Clone the repository (requires repository access)
-git clone https://github.com/IcyB1ue/Time-Table-Intersection-for-NTHU.git
-cd Time-Table-Intersection-for-NTHU
-
-# Install dependencies and create virtual environment
-uv sync
-
-# Run the application
-uv run python main.py
-```
-
 ## Usage
 
 ### GUI Mode (Default)
@@ -125,12 +106,24 @@ scheduler/
 
 ### Building from Source
 
-**Requirements:**
-- Python 3.13+
-- PyInstaller 6.15.0+
-- PyQt6 6.9.1+
+**Prerequisites:**
+- Python 3.13 or higher
+- uv package manager (install from https://docs.astral.sh/uv/getting-started/installation/)
 
-**Build Process:**
+**Installation:**
+```bash
+# Clone the repository (requires repository access)
+git clone https://github.com/IcyB1ue/Time-Table-Intersection-for-NTHU.git
+cd Time-Table-Intersection-for-NTHU
+
+# Install dependencies and create virtual environment
+uv sync
+
+# Run the application
+uv run python main.py
+```
+
+**Build Executable:**
 ```bash
 # Install build dependencies
 pip install pyinstaller
