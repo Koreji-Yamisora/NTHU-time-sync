@@ -3,6 +3,9 @@ import os
 from models import Person, TimeSlot
 from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
+import re
+import urllib.parse
+
 
 TAIPEI = ZoneInfo("Asia/Taipei")
 DAY_OFFSET = +1  # shift days manually
@@ -24,7 +27,6 @@ def parse_ics_content(content):
 
     events = []
     lines = content.split("\n")
-    lines = [line.strip() for line in lines]
 
     current_event = None
     in_event = False
@@ -57,15 +59,12 @@ def parse_ics_content(content):
                 i += 1
                 full_line += lines[i][1:]
 
+            full_line = full_line.strip()
+
             colon_pos = full_line.find(":")
             if colon_pos > 0:
                 property_name = full_line[:colon_pos]
                 property_value = full_line[colon_pos + 1 :]
-
-                # Handle parameters (like DTSTART;TZID=...)
-                semicolon_pos = property_name.find(";")
-                if semicolon_pos > 0:
-                    property_name = property_name[:semicolon_pos]
 
                 if property_name == "DTSTART":
                     current_event["start"] = parse_ics_datetime(property_value)
@@ -80,43 +79,19 @@ def parse_ics_content(content):
                     # PRIORITY: Use first line of description as course name
                     description_lines = property_value.replace("\\n", "\n").split("\n")
                     first_line = description_lines[0].replace("\\,", ",").strip()
-
                     if first_line:
                         current_event["course_name"] = first_line
 
-                    # Store full description for potential course code extraction
-                    current_event["full_description"] = property_value
-
+                    match = re.search(r"courses/([^\s]+)", full_line)
+                    if match:
+                        course_code = match.group(1)
+                        course_code = urllib.parse.unquote(course_code).replace(" ", "")
+                        current_event["course_code"] = course_code
+                    else:
+                        current_event["course_code"] = "Unknown"
         i += 1
 
     return events
-
-
-def extract_course_name_and_code(event):
-    """Extract the best course name from an event, preferring description first line"""
-
-    # Priority 1: First line of description (English name)
-    if "course_name" in event:
-        course_name = event["course_name"]
-
-        # Try to also extract course code from full description if available
-        if "full_description" in event:
-            course_code = extract_course_code_from_description(
-                event["full_description"]
-            )
-            if course_code:
-                # You can choose format: "Course Name (CODE)" or just "Course Name"
-                return f"{course_name} ({course_code})"
-                # OR return just the English name: return course_name
-
-        return course_name
-
-    # Priority 2: Summary field
-    if "summary" in event:
-        return event["summary"]
-
-    # Priority 3: Default fallback
-    return "Imported Course"
 
 
 def create_time_slot_from_event(event):
@@ -132,23 +107,6 @@ def create_time_slot_from_event(event):
     return TimeSlot(start_time, end_time, day_name)
 
 
-def extract_course_code_from_description(description):
-    """Extract course code from full description"""
-    import re
-
-    # Clean up the description
-    cleaned = description.replace("\\n", "\n").replace("\\t", "\t")
-
-    # Look for URL pattern with course code (your original logic)
-    url_match = re.search(r"https://nthumods\.com/courses/([^\s\\]+)", cleaned)
-    if url_match:
-        url_part = url_match.group(1)
-        import urllib.parse
-
-        return urllib.parse.unquote(url_part)
-    return None
-
-
 def import_ics_file(filename, courses, person_name, people_list):
     """Import ICS file and create courses using description first line as course name"""
     with open(filename, "r", encoding="utf-8") as f:
@@ -161,9 +119,11 @@ def import_ics_file(filename, courses, person_name, people_list):
     # Group events by course name (using description first line)
     courses_from_ics = {}
     for event in events:
-        course_name = extract_course_name_and_code(
-            event
+        name = event.get(
+            "course_name", "imported Courses"
         )  # This uses description first line
+        code = event.get("course_code", "Unknown Code")
+        course_name = f"{name} ({code})"
 
         if course_name not in courses_from_ics:
             courses_from_ics[course_name] = []
@@ -203,63 +163,51 @@ def import_ics_file(filename, courses, person_name, people_list):
 def load_data(filename):
     """Load people and courses from JSON file"""
     if not os.path.exists(filename):
-        return []
+        return [], {}
 
     with open(filename, "r") as file:
         data = json.load(file)
 
+    # Load courses
     courses = {}
     for cname, slots in data.get("courses", {}).items():
         courses[cname] = [TimeSlot(*slot) for slot in slots]
 
+    # Load people
     people = []
-    for name, schedule in data.get("people", {}).items():
-        people.append(
-            Person(name, [courses[cname] for cname in schedule if cname in courses])
-        )
+    for name, course_names in data.get("people", {}).items():
+        # Get the actual course time slots for each course name
+        person_courses = []
+        for course_name in course_names:
+            if course_name in courses:
+                person_courses.append(courses[course_name])  # Keep as list of courses
+        people.append(Person(name, person_courses))
 
-    return people
+    return people, courses
 
 
-def save_data(people_list, filename):
+def save_data(people_list, courses, filename):
     """Save people and courses to JSON file"""
-    # Extract all unique courses from all people
-    all_courses = {}
+    # Convert courses to saveable format
+    courses_data = {}
+    for course_name, slots in courses.items():
+        courses_data[course_name] = [
+            (slot.start_time, slot.end_time, slot.day) for slot in slots
+        ]
 
-    for person in people_list:
-        for course_slots in person.schedule:
-            # Create a unique course identifier based on the time slots
-            course_key = f"course_{len(all_courses)}"
-            slots_data = [
-                (slot.start_time, slot.end_time, slot.day) for slot in course_slots
-            ]
-
-            # Check if this course already exists
-            existing_key = None
-            for key, existing_slots in all_courses.items():
-                if existing_slots == slots_data:
-                    existing_key = key
-                    break
-
-            if existing_key is None:
-                all_courses[course_key] = slots_data
-
-    # Create people data with course references
+    # Create people data with course names
     people_data = {}
     for person in people_list:
-        course_refs = []
+        course_names = []
         for course_slots in person.schedule:
-            slots_data = [
-                (slot.start_time, slot.end_time, slot.day) for slot in course_slots
-            ]
-            # Find the course key for this set of slots
-            for key, existing_slots in all_courses.items():
-                if existing_slots == slots_data:
-                    course_refs.append(key)
+            # Find the course name that matches these slots
+            for course_name, stored_slots in courses.items():
+                if stored_slots == course_slots:
+                    course_names.append(course_name)
                     break
-        people_data[person.name] = course_refs
+        people_data[person.name] = course_names
 
-    data = {"courses": all_courses, "people": people_data}
+    data = {"courses": courses_data, "people": people_data}
 
     with open(filename, "w") as file:
         json.dump(data, file, indent=2)
@@ -444,52 +392,3 @@ def get_people_in_course(people_list, courses, course_name):
                 break
 
     return enrolled_people
-
-
-def create_sample_data():
-    """Create sample data for testing with 24-hour format"""
-    # Create some sample time slots with 24-hour format
-    math_slots = [
-        TimeSlot("09:00", "10:30", "Monday"),
-        TimeSlot("09:00", "10:30", "Wednesday"),
-        TimeSlot("09:00", "10:30", "Friday"),
-    ]
-
-    physics_slots = [
-        TimeSlot("11:00", "12:30", "Tuesday"),
-        TimeSlot("11:00", "12:30", "Thursday"),
-    ]
-
-    chemistry_slots = [
-        TimeSlot("14:00", "15:30", "Monday"),
-        TimeSlot("14:00", "15:30", "Wednesday"),
-    ]
-
-    # Create sample people
-    people = [
-        Person("Alice", [math_slots, physics_slots]),
-        Person("Bob", [math_slots, chemistry_slots]),
-        Person("Charlie", [physics_slots, chemistry_slots]),
-    ]
-
-    return people
-
-
-def create_sample_courses():
-    """Create sample courses for testing with 24-hour format"""
-    courses = {
-        "Mathematics": [
-            TimeSlot("09:00", "10:30", "Monday"),
-            TimeSlot("09:00", "10:30", "Wednesday"),
-            TimeSlot("09:00", "10:30", "Friday"),
-        ],
-        "Physics": [
-            TimeSlot("11:00", "12:30", "Tuesday"),
-            TimeSlot("11:00", "12:30", "Thursday"),
-        ],
-        "Chemistry": [
-            TimeSlot("14:00", "15:30", "Monday"),
-            TimeSlot("14:00", "15:30", "Wednesday"),
-        ],
-    }
-    return courses

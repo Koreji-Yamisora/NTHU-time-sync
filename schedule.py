@@ -43,11 +43,11 @@ def intersect_intervals(list1, list2):
     return result
 
 
-def common_free_times(people_list, day):
+def common_free_times(people_list, day, start="09:00", end="23:00"):
     """Find common free times for multiple Person objects on a given day"""
     all_free = []
     for person in people_list:
-        free = invert_busy(list(person.busy_time.values()), day)
+        free = invert_busy(list(person.busy_time.values()), day, start, end)
         all_free.append(free)
 
     if not all_free:

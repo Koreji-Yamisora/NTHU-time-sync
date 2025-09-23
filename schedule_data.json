@@ -1,47 +1,6 @@
 {
   "courses": {
-    "course_0": [
-      [
-        "09:00",
-        "10:30",
-        "Monday"
-      ],
-      [
-        "09:00",
-        "10:30",
-        "Wednesday"
-      ],
-      [
-        "09:00",
-        "10:30",
-        "Friday"
-      ]
-    ],
-    "course_1": [
-      [
-        "11:00",
-        "12:30",
-        "Tuesday"
-      ],
-      [
-        "11:00",
-        "12:30",
-        "Thursday"
-      ]
-    ],
-    "course_2": [
-      [
-        "14:00",
-        "15:30",
-        "Monday"
-      ],
-      [
-        "14:00",
-        "15:30",
-        "Wednesday"
-      ]
-    ],
-    "Mandarin Basic I": [
+    "Mandarin Basic I (11410CLC100105)": [
       [
         "18:30",
         "20:20",
@@ -53,7 +12,7 @@
         "Thursday"
       ]
     ],
-    "Introduction to Programming in Python": [
+    "Introduction to Programming in Python (11410EECS121000)": [
       [
         "13:20",
         "15:10",
@@ -65,28 +24,28 @@
         "Thursday"
       ]
     ],
-    "Advanced English: Listening and Speaking": [
+    "Advanced English: Listening and Speaking (11410FL102807)": [
       [
         "10:10",
         "12:00",
         "Wednesday"
       ]
     ],
-    "International Etiquette and Cross-Cultural Communication": [
+    "International Etiquette and Cross-Cultural Communication (11410IBP102300)": [
       [
         "10:10",
         "12:00",
         "Monday"
       ]
     ],
-    "Forms in Nature": [
+    "Forms in Nature (11410IBP103000)": [
       [
         "13:20",
         "15:10",
         "Monday"
       ]
     ],
-    "Calculus I": [
+    "Calculus I (11410MATH103008)": [
       [
         "10:10",
         "12:00",
@@ -98,14 +57,14 @@
         "Thursday"
       ]
     ],
-    "Physical Education": [
+    "Physical Education (11410PE111024)": [
       [
         "13:20",
         "15:10",
         "Friday"
       ]
     ],
-    "General Physics B (I)": [
+    "General Physics B (I) (11410PHYS113307)": [
       [
         "08:00",
         "09:50",
@@ -116,31 +75,61 @@
         "09:50",
         "Friday"
       ]
+    ],
+    "Mandarin Basic Conversation I (11410CLC101102)": [
+      [
+        "15:30",
+        "17:20",
+        "Wednesday"
+      ]
+    ],
+    "Introduction to Programming (I) (11410CS135501)": [
+      [
+        "15:30",
+        "17:20",
+        "Monday"
+      ],
+      [
+        "14:20",
+        "15:10",
+        "Thursday"
+      ]
+    ],
+    "Precalculus (11410MATH100000)": [
+      [
+        "11:10",
+        "12:00",
+        "Thursday"
+      ]
+    ],
+    "hi": [
+      [
+        "09:00",
+        "10:00",
+        "Monday"
+      ]
     ]
   },
   "people": {
-    "Alice": [
-      "course_0",
-      "course_1"
-    ],
-    "Bob": [
-      "course_0",
-      "course_2"
-    ],
-    "Charlie": [
-      "course_1",
-      "course_2"
-    ],
-    "Xim": [],
     "Artic": [
-      "course_3",
-      "course_4",
-      "course_5",
-      "course_6",
-      "course_7",
-      "course_8",
-      "course_9",
-      "course_10"
+      "Mandarin Basic I (11410CLC100105)",
+      "Introduction to Programming in Python (11410EECS121000)",
+      "Advanced English: Listening and Speaking (11410FL102807)",
+      "International Etiquette and Cross-Cultural Communication (11410IBP102300)",
+      "Forms in Nature (11410IBP103000)",
+      "Calculus I (11410MATH103008)",
+      "Physical Education (11410PE111024)",
+      "General Physics B (I) (11410PHYS113307)"
+    ],
+    "Xim": [
+      "Mandarin Basic Conversation I (11410CLC101102)",
+      "Introduction to Programming (I) (11410CS135501)",
+      "International Etiquette and Cross-Cultural Communication (11410IBP102300)",
+      "Forms in Nature (11410IBP103000)",
+      "Precalculus (11410MATH100000)",
+      "Calculus I (11410MATH103008)",
+      "Physical Education (11410PE111024)",
+      "General Physics B (I) (11410PHYS113307)"
     ]
   }
 }
