@@ -28,25 +28,6 @@ A modern, cross-platform desktop application for managing schedules and finding 
    - **macOS**: `scheduler-macos-v*.zip` (extract and run the `.app` file)
 3. Run the executable - no installation required!
 
-### Option 2: Run from Source
-
-**Prerequisites:**
-- Python 3.13 or higher
-- uv package manager (install from https://docs.astral.sh/uv/getting-started/installation/)
-
-**Installation:**
-```bash
-# Clone the repository (requires repository access)
-git clone https://github.com/IcyB1ue/Time-Table-Intersection-for-NTHU.git
-cd Time-Table-Intersection-for-NTHU
-
-# Install dependencies and create virtual environment
-uv sync
-
-# Run the application
-uv run python main.py
-```
-
 ## JSON Data Operations
 
 The application uses JSON files to store and manage schedule data. Here's how to work with them:
@@ -68,6 +49,25 @@ The application uses JSON files to store and manage schedule data. Here's how to
 - **Encrypted Saves**: Your data is automatically encrypted when using Save/Save As
 - **Plain Exports**: Use Export for sharing or backup (unencrypted)
 - **Auto-Detection**: Open automatically detects and handles both formats
+
+### Option 2: Run from Source
+
+**Prerequisites:**
+- Python 3.13 or higher
+- uv package manager (install from https://docs.astral.sh/uv/getting-started/installation/)
+
+**Installation:**
+```bash
+# Clone the repository (requires repository access)
+git clone https://github.com/IcyB1ue/Time-Table-Intersection-for-NTHU.git
+cd Time-Table-Intersection-for-NTHU
+
+# Install dependencies and create virtual environment
+uv sync
+
+# Run the application
+uv run python main.py
+```
 
 ## Usage
 
