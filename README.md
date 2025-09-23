@@ -7,10 +7,14 @@ A modern, cross-platform desktop application for managing schedules and finding 
 - **Schedule Management**: Add and manage people with their individual schedules
 - **Course Integration**: Track courses and their time slots
 - **Common Time Finder**: Automatically identify overlapping free time slots
+- **JSON Data Operations**: 
+  - Save encrypted data for security
+  - Export plain JSON for sharing
+  - Open both encrypted and plain JSON files
+  - Create blank schedules on first run
 - **Modern GUI**: Clean, intuitive interface built with PyQt6
 - **Cross-Platform**: Runs on Windows, macOS, and Linux
 - **One-Click Builds**: Automated executable generation for easy distribution
-- **Data Persistence**: Save and load schedules in JSON format
 
 ## Quick Start
 
@@ -57,6 +61,46 @@ The application also supports console mode for quick operations:
 - View all schedules
 - Find common free times
 - Access the GUI from the command line
+
+## JSON Data Operations
+
+The application uses JSON files to store and manage schedule data. Here's how to work with them:
+
+### **File Operations (Menu Bar & Toolbar)**
+- **New**: Create a blank schedule (creates `schedule_data.json`)
+- **Open...**: Load an existing JSON file (supports both encrypted and plain JSON)
+- **Save**: Save current data in encrypted JSON format
+- **Save As...**: Save current data with a new filename (encrypted)
+- **Export...**: Export current data as plain JSON (unencrypted)
+
+### **Data File Handling**
+- **First Run**: If no `schedule_data.json` exists, the app creates a blank one
+- **File Selection**: Use "Open..." to select any JSON file from your system
+- **Encryption**: Save/Save As automatically encrypts your data for security
+- **Compatibility**: Open recognizes both encrypted and plain JSON files
+
+### **JSON File Structure**
+```json
+{
+  "courses": {
+    "course_id": {
+      "name": "Course Name",
+      "time_slots": ["Mon 9:00-10:00", "Wed 14:00-15:00"]
+    }
+  },
+  "people": {
+    "person_id": {
+      "name": "Person Name",
+      "time_slots": ["Mon 9:00-10:00", "Tue 13:00-14:00"]
+    }
+  }
+}
+```
+
+### **Security Features**
+- **Encrypted Saves**: Your data is automatically encrypted when using Save/Save As
+- **Plain Exports**: Use Export for sharing or backup (unencrypted)
+- **Auto-Detection**: Open automatically detects and handles both formats
 
 ## Development
 
