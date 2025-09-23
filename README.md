@@ -13,7 +13,8 @@ A modern, cross-platform desktop application for managing schedules and finding 
 - **Course Integration**: Track courses and their time slots
 - **Common Time Finder**: Automatically identify overlapping free time slots
 - **Import/Export System**: 
-  - Import any compatible JSON schedule file
+  - Import ICS files (iCalendar format) from calendar apps
+  - Import/Export JSON schedule files
   - Export data for sharing and backup
   - Save encrypted data for security
   - Cross-platform data compatibility
@@ -32,9 +33,9 @@ A modern, cross-platform desktop application for managing schedules and finding 
    - **macOS**: `scheduler-macos-v*.zip` (extract and run the `.app` file)
 3. **Run the executable** - no installation required!
 
-## JSON Data Operations
+## Import/Export Operations
 
-The application uses JSON files to store and manage schedule data. **Import/Export functionality is a key feature** that allows you to easily share, backup, and migrate your schedule data.
+The application supports multiple file formats for importing and exporting schedule data. **Import/Export functionality is a key feature** that allows you to easily share, backup, and migrate your schedule data.
 
 ### **File Operations (Menu Bar & Toolbar)**
 - **New**: Create a blank schedule (creates `schedule_data.json`)
@@ -43,11 +44,18 @@ The application uses JSON files to store and manage schedule data. **Import/Expo
 - **Save As...**: Save current data with a new filename (encrypted)
 - **Export...**: **Export** current data as plain JSON (unencrypted)
 
+### **ICS File Import (iCalendar)**
+- **Import ICS Files**: Load schedule data from calendar applications
+- **Calendar Integration**: Works with Google Calendar, Outlook, Apple Calendar, etc.
+- **Course Creation**: Automatically creates courses from ICS file descriptions
+- **Person Assignment**: Assign imported schedules to specific people
+
 ### **Import/Export Capabilities**
+- **Import ICS Files**: Load schedule data from any calendar application
 - **Import Any JSON**: Load schedule data from any compatible JSON file
 - **Export for Sharing**: Create plain JSON files for sharing with others
 - **Backup & Restore**: Save encrypted backups and restore them later
-- **Cross-Platform**: JSON files work across Windows, macOS, and Linux
+- **Cross-Platform**: Files work across Windows, macOS, and Linux
 - **Data Migration**: Easily move your data between different installations
 
 ### **Data File Handling**
