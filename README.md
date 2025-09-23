@@ -12,11 +12,11 @@ A modern, cross-platform desktop application for managing schedules and finding 
 - **Schedule Management**: Add and manage people with their individual schedules
 - **Course Integration**: Track courses and their time slots
 - **Common Time Finder**: Automatically identify overlapping free time slots
-- **JSON Data Operations**: 
+- **Import/Export System**: 
+  - Import any compatible JSON schedule file
+  - Export data for sharing and backup
   - Save encrypted data for security
-  - Export plain JSON for sharing
-  - Open both encrypted and plain JSON files
-  - Create blank schedules on first run
+  - Cross-platform data compatibility
 - **Modern GUI**: Clean, intuitive interface built with PyQt6
 - **Cross-Platform**: Runs on Windows, macOS, and Linux
 - **One-Click Builds**: Automated executable generation for easy distribution
@@ -34,14 +34,21 @@ A modern, cross-platform desktop application for managing schedules and finding 
 
 ## JSON Data Operations
 
-The application uses JSON files to store and manage schedule data. Here's how to work with them:
+The application uses JSON files to store and manage schedule data. **Import/Export functionality is a key feature** that allows you to easily share, backup, and migrate your schedule data.
 
 ### **File Operations (Menu Bar & Toolbar)**
 - **New**: Create a blank schedule (creates `schedule_data.json`)
-- **Open...**: Load an existing JSON file (supports both encrypted and plain JSON)
+- **Open...**: **Import** an existing JSON file (supports both encrypted and plain JSON)
 - **Save**: Save current data in encrypted JSON format
 - **Save As...**: Save current data with a new filename (encrypted)
-- **Export...**: Export current data as plain JSON (unencrypted)
+- **Export...**: **Export** current data as plain JSON (unencrypted)
+
+### **Import/Export Capabilities**
+- **Import Any JSON**: Load schedule data from any compatible JSON file
+- **Export for Sharing**: Create plain JSON files for sharing with others
+- **Backup & Restore**: Save encrypted backups and restore them later
+- **Cross-Platform**: JSON files work across Windows, macOS, and Linux
+- **Data Migration**: Easily move your data between different installations
 
 ### **Data File Handling**
 - **First Run**: If no `schedule_data.json` exists, the app creates a blank one
