@@ -9,7 +9,7 @@ A modern, cross-platform desktop application for managing schedules and finding 
 
 ### Alternative Repository
 [![GitHub release](https://img.shields.io/github/v/release/Koreji-Yamisora/NTHU-time-sync)](https://github.com/Koreji-Yamisora/NTHU-time-sync/releases)
-[Koreji-Yamisora/NTHU-time-sync](https://github.com/Koreji-Yamisora/NTHU-time-sync)
+[Koreji-Yamisora/NTHU-time-sync](https://github.com/Koreji-Yamisora/NTHU-time-sync) - NTHU-focused version
 
 ## Features
 
