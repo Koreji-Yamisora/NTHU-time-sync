@@ -26,11 +26,16 @@ jobs:
         run: |
           pyinstaller main.spec
 
+      - name: Rename Windows executable
+        run: |
+          cd dist
+          mv main.exe scheduler-windows-${{ github.ref_name }}.exe
+
       - name: Upload Windows artifact
         uses: actions/upload-artifact@v4
         with:
           name: scheduler-windows-${{ github.ref_name }}
-          path: dist/main.exe
+          path: dist/scheduler-windows-${{ github.ref_name }}.exe
           retention-days: 30
 
   build-macos:
