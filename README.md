@@ -20,8 +20,8 @@ A modern, cross-platform desktop application for managing schedules and finding 
 
 1. Go to the Releases page (requires repository access)
 2. Download the appropriate file for your operating system:
-   - **Windows**: `scheduler-windows-v2.0.1.exe`
-   - **macOS**: `scheduler-macos-v2.0.1.zip` (extract and run the `.app` file)
+   - **Windows**: `scheduler-windows-v*.exe` (latest version)
+   - **macOS**: `scheduler-macos-v*.zip` (extract and run the `.app` file)
 3. Run the executable - no installation required!
 
 ### Option 2: Run from Source
@@ -114,8 +114,8 @@ git push origin v2.1.0
 
 When you push a version tag (like `v2.1.0`), GitHub Actions will:
 
-1. **Build Windows executable** (`scheduler-windows-v2.1.0.exe`)
-2. **Build macOS application bundle** (`scheduler-macos-v2.1.0.zip`)
+1. **Build Windows executable** (`scheduler-windows-v*.exe`)
+2. **Build macOS application bundle** (`scheduler-macos-v*.zip`)
 3. **Create a GitHub release** with both files attached
 4. **Generate release notes** with download instructions
 
@@ -156,7 +156,8 @@ This project is currently private. Please check the repository for license detai
 
 ## Version History
 
-- **v2.0.1**: Fixed Windows executable attachment in releases
+- **Latest**: Removed embedded JSON, added encryption/decryption, optimized with uv
+- **v2.0.x**: Fixed Windows executable attachment in releases
 - **v2.0.0**: Added automated cross-platform builds with GitHub Actions
 - **v0.1.0**: Initial release with basic schedule management
 
