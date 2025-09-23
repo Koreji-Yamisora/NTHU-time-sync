@@ -18,15 +18,17 @@ A modern, cross-platform desktop application for managing schedules and finding 
 
 ## Quick Start
 
-### Option 1: Download Pre-built Executable (Recommended)
+### Download Pre-built Executable (Recommended)
 
 **Note**: This repository is currently private. Pre-built executables are available through the automated release system.
 
-1. Go to the Releases page (requires repository access)
-2. Download the appropriate file for your operating system:
+1. **Go to the Releases page** (requires repository access):
+   - [**Original Repository**](https://github.com/IcyB1ue/Time-Table-Intersection-for-NTHU/releases) - `IcyB1ue/Time-Table-Intersection-for-NTHU`
+   - [**NTHU-time-sync**](https://github.com/Koreji-Yamisora/NTHU-time-sync/releases) - `Koreji-Yamisora/NTHU-time-sync`
+2. **Download the appropriate file** for your operating system:
    - **Windows**: `scheduler-windows-v*.exe` (latest version)
    - **macOS**: `scheduler-macos-v*.zip` (extract and run the `.app` file)
-3. Run the executable - no installation required!
+3. **Run the executable** - no installation required!
 
 ## JSON Data Operations
 
