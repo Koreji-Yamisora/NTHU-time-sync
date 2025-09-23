@@ -25,10 +25,8 @@ A modern, cross-platform desktop application for managing schedules and finding 
 
 ### Download Pre-built Executable (Recommended)
 
-**Note**: This repository is currently private. Pre-built executables are available through the automated release system.
-
-1. **Go to the Releases page** (requires repository access):
-   - [**NTHU-time-sync**](https://github.com/Koreji-Yamisora/NTHU-time-sync/releases) - `Koreji-Yamisora/NTHU-time-sync`
+1. **Go to the Releases page**:
+   - [**Download Latest Release**](https://github.com/Koreji-Yamisora/NTHU-time-sync/releases)
 2. **Download the appropriate file** for your operating system:
    - **Windows**: `scheduler-windows-v*.exe` (latest version)
    - **macOS**: `scheduler-macos-v*.zip` (extract and run the `.app` file)
