@@ -47,21 +47,6 @@ uv sync
 uv run python main.py
 ```
 
-## Usage
-
-### GUI Mode (Default)
-When you run the application, it will launch the graphical interface where you can:
-- Add people and their schedules
-- Manage courses and time slots
-- View common free times in an intuitive table format
-- Import/export schedule data
-
-### Console Mode
-The application also supports console mode for quick operations:
-- View all schedules
-- Find common free times
-- Access the GUI from the command line
-
 ## JSON Data Operations
 
 The application uses JSON files to store and manage schedule data. Here's how to work with them:
@@ -79,28 +64,47 @@ The application uses JSON files to store and manage schedule data. Here's how to
 - **Encryption**: Save/Save As automatically encrypts your data for security
 - **Compatibility**: Open recognizes both encrypted and plain JSON files
 
-### **JSON File Structure**
-```json
-{
-  "courses": {
-    "course_id": {
-      "name": "Course Name",
-      "time_slots": ["Mon 9:00-10:00", "Wed 14:00-15:00"]
-    }
-  },
-  "people": {
-    "person_id": {
-      "name": "Person Name",
-      "time_slots": ["Mon 9:00-10:00", "Tue 13:00-14:00"]
-    }
-  }
-}
-```
-
 ### **Security Features**
 - **Encrypted Saves**: Your data is automatically encrypted when using Save/Save As
 - **Plain Exports**: Use Export for sharing or backup (unencrypted)
 - **Auto-Detection**: Open automatically detects and handles both formats
+
+## Usage
+
+### GUI Mode (Default)
+When you run the application, it will launch the graphical interface where you can:
+- Add people and their schedules
+- Manage courses and time slots
+- View common free times in an intuitive table format
+- Import/export schedule data
+
+### Console Mode
+The application also supports console mode for quick operations:
+- View all schedules
+- Find common free times
+- Access the GUI from the command line
+
+## Requirements
+
+- **Python**: 3.13 or higher
+- **Dependencies**:
+  - PyQt6 >= 6.9.1 (GUI framework)
+  - PyInstaller >= 6.15.0 (for building executables)
+
+## Issues & Support
+
+- **Bug Reports**: Create an issue (requires repository access)
+- **Feature Requests**: Start a discussion (requires repository access)
+- **Questions**: Ask in discussions (requires repository access)
+
+## Version History
+
+- **Latest**: Removed embedded JSON, added encryption/decryption, optimized with uv
+- **v2.0.x**: Fixed Windows executable attachment in releases
+- **v2.0.0**: Added automated cross-platform builds with GitHub Actions
+- **v0.1.0**: Initial release with basic schedule management
+
+---
 
 ## Development
 
@@ -173,13 +177,6 @@ When you push a version tag (like `v2.1.0`), GitHub Actions will:
 
 Track build progress at: Actions page (requires repository access)
 
-## Requirements
-
-- **Python**: 3.13 or higher
-- **Dependencies**:
-  - PyQt6 >= 6.9.1 (GUI framework)
-  - PyInstaller >= 6.15.0 (for building executables)
-
 ## Contributing
 
 1. Fork the repository
@@ -191,19 +188,6 @@ Track build progress at: Actions page (requires repository access)
 ## License
 
 This project is currently private. Please check the repository for license details.
-
-## Issues & Support
-
-- **Bug Reports**: Create an issue (requires repository access)
-- **Feature Requests**: Start a discussion (requires repository access)
-- **Questions**: Ask in discussions (requires repository access)
-
-## Version History
-
-- **Latest**: Removed embedded JSON, added encryption/decryption, optimized with uv
-- **v2.0.x**: Fixed Windows executable attachment in releases
-- **v2.0.0**: Added automated cross-platform builds with GitHub Actions
-- **v0.1.0**: Initial release with basic schedule management
 
 ---
 
