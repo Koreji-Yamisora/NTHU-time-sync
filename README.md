@@ -1,56 +1,59 @@
 # Group Free Time Scheduler
 
+[![GitHub release](https://img.shields.io/github/v/release/IcyB1ue/Time-Table-Intersection-for-NTHU)](https://github.com/IcyB1ue/Time-Table-Intersection-for-NTHU/releases)
+[![GitHub release](https://img.shields.io/github/v/release/Koreji-Yamisora/NTHU-time-sync)](https://github.com/Koreji-Yamisora/NTHU-time-sync/releases)
+
 A modern, cross-platform desktop application for managing schedules and finding common free times among groups of people. Built with Python and PyQt6, featuring an intuitive GUI and automated cross-platform builds.
 
 ## Features
 
-- **Schedule Management**: Add and manage people with their individual schedules
-- **Course Integration**: Track courses and their time slots
-- **Common Time Finder**: Automatically identify overlapping free time slots
-- **JSON Data Operations**: 
+- :calendar: **Schedule Management**: Add and manage people with their individual schedules
+- :book: **Course Integration**: Track courses and their time slots
+- :mag: **Common Time Finder**: Automatically identify overlapping free time slots
+- :floppy_disk: **JSON Data Operations**: 
   - Save encrypted data for security
   - Export plain JSON for sharing
   - Open both encrypted and plain JSON files
   - Create blank schedules on first run
-- **Modern GUI**: Clean, intuitive interface built with PyQt6
-- **Cross-Platform**: Runs on Windows, macOS, and Linux
-- **One-Click Builds**: Automated executable generation for easy distribution
+- :computer: **Modern GUI**: Clean, intuitive interface built with PyQt6
+- :globe_with_meridians: **Cross-Platform**: Runs on Windows, macOS, and Linux
+- :rocket: **One-Click Builds**: Automated executable generation for easy distribution
 
 ## Quick Start
 
-### Download Pre-built Executable (Recommended)
+### :package: Download Pre-built Executable (Recommended)
 
 **Note**: This repository is currently private. Pre-built executables are available through the automated release system.
 
-1. **Go to the Releases page** (requires repository access):
+1. :link: **Go to the Releases page** (requires repository access):
    - [**Original Repository**](https://github.com/IcyB1ue/Time-Table-Intersection-for-NTHU/releases) - `IcyB1ue/Time-Table-Intersection-for-NTHU`
    - [**NTHU-time-sync**](https://github.com/Koreji-Yamisora/NTHU-time-sync/releases) - `Koreji-Yamisora/NTHU-time-sync`
-2. **Download the appropriate file** for your operating system:
-   - **Windows**: `scheduler-windows-v*.exe` (latest version)
-   - **macOS**: `scheduler-macos-v*.zip` (extract and run the `.app` file)
-3. **Run the executable** - no installation required!
+2. :arrow_down: **Download the appropriate file** for your operating system:
+   - :desktop_computer: **Windows**: `scheduler-windows-v*.exe` (latest version)
+   - :apple: **macOS**: `scheduler-macos-v*.zip` (extract and run the `.app` file)
+3. :play: **Run the executable** - no installation required!
 
-## JSON Data Operations
+## :floppy_disk: JSON Data Operations
 
 The application uses JSON files to store and manage schedule data. Here's how to work with them:
 
 ### **File Operations (Menu Bar & Toolbar)**
-- **New**: Create a blank schedule (creates `schedule_data.json`)
-- **Open...**: Load an existing JSON file (supports both encrypted and plain JSON)
-- **Save**: Save current data in encrypted JSON format
-- **Save As...**: Save current data with a new filename (encrypted)
-- **Export...**: Export current data as plain JSON (unencrypted)
+- :new: **New**: Create a blank schedule (creates `schedule_data.json`)
+- :open_file_folder: **Open...**: Load an existing JSON file (supports both encrypted and plain JSON)
+- :lock: **Save**: Save current data in encrypted JSON format
+- :lock: **Save As...**: Save current data with a new filename (encrypted)
+- :unlock: **Export...**: Export current data as plain JSON (unencrypted)
 
 ### **Data File Handling**
-- **First Run**: If no `schedule_data.json` exists, the app creates a blank one
-- **File Selection**: Use "Open..." to select any JSON file from your system
-- **Encryption**: Save/Save As automatically encrypts your data for security
-- **Compatibility**: Open recognizes both encrypted and plain JSON files
+- :sparkles: **First Run**: If no `schedule_data.json` exists, the app creates a blank one
+- :file_folder: **File Selection**: Use "Open..." to select any JSON file from your system
+- :closed_lock_with_key: **Encryption**: Save/Save As automatically encrypts your data for security
+- :link: **Compatibility**: Open recognizes both encrypted and plain JSON files
 
 ### **Security Features**
-- **Encrypted Saves**: Your data is automatically encrypted when using Save/Save As
-- **Plain Exports**: Use Export for sharing or backup (unencrypted)
-- **Auto-Detection**: Open automatically detects and handles both formats
+- :closed_lock_with_key: **Encrypted Saves**: Your data is automatically encrypted when using Save/Save As
+- :unlock: **Plain Exports**: Use Export for sharing or backup (unencrypted)
+- :mag: **Auto-Detection**: Open automatically detects and handles both formats
 
 ## Usage
 
