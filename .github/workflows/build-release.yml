@@ -36,7 +36,7 @@ jobs:
       - name: Rename Windows executable
         run: |
           cd dist
-          mv main.exe scheduler-windows-${{ github.ref_name }}.exe
+          mv ScheduleManager.exe scheduler-windows-${{ github.ref_name }}.exe
 
       - name: Upload Windows artifact
         uses: actions/upload-artifact@v4
@@ -75,7 +75,7 @@ jobs:
       - name: Create macOS archive
         run: |
           cd dist
-          zip -r scheduler-macos-${{ github.ref_name }}.zip main.app/
+          zip -r scheduler-macos-${{ github.ref_name }}.zip ScheduleManager.app/
 
       - name: Upload macOS artifact
         uses: actions/upload-artifact@v4
