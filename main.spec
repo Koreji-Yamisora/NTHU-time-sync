@@ -84,7 +84,7 @@ exe = EXE(
     a.binaries,
     a.datas,
     [],
-    name='main',
+    name='ScheduleManager',
     debug=False,
     bootloader_ignore_signals=False,
     strip=True,
@@ -100,7 +100,19 @@ exe = EXE(
 )
 app = BUNDLE(
     exe,
-    name='main.app',
+    name='ScheduleManager.app',
     icon=None,
-    bundle_identifier=None,
+    bundle_identifier='com.schedulemanager.app',
+    info_plist={
+        'CFBundleName': 'Schedule Manager',
+        'CFBundleDisplayName': 'Schedule Manager',
+        'CFBundleIdentifier': 'com.schedulemanager.app',
+        'CFBundleVersion': '2.0.4',
+        'CFBundleShortVersionString': '2.0.4',
+        'CFBundleExecutable': 'ScheduleManager',
+        'CFBundlePackageType': 'APPL',
+        'CFBundleSignature': '????',
+        'LSMinimumSystemVersion': '10.15.0',
+        'NSHighResolutionCapable': True,
+    },
 )
