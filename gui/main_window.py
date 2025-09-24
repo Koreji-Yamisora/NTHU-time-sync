@@ -508,7 +508,7 @@ def launch_pyqt6_gui(people_list, courses, data_file="schedule_data.json"):
     
     # Set application properties
     app.setApplicationName("Schedule Manager")
-    app.setApplicationVersion("2.0")
+    app.setApplicationVersion("2.0.4")
     app.setOrganizationName("Schedule Manager")
     
     # Create and show main window
